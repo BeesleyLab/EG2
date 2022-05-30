@@ -1,14 +1,14 @@
 ## code to prepare `sysdata` dataset goes here
 library(devtools) ; setwd("/working/lab_jonathb/alexandT/EG2/") ; load_all()
-reference_panels_dir <- "/working/lab_jonathb/alexandT/tgp_paper/wrangle_package_data/reference_panels/"
-GENCODE_dir <- paste0(reference_panels_dir, "/output/GENCODE/")
-GENCODE_filter <- paste0(GENCODE_dir, "gencode.v34lift37.basic.")
-coding_mutations_dir <- paste0(reference_panels_dir, "/output/coding_mutations/")
+sysdata_dir <- "/working/lab_jonathb/alexandT/tgp_paper/wrangle_package_data/sysdata/"
+GENCODE_dir <- paste0(sysdata_dir, "/output/GENCODE/")
+GENCODE_filter <- paste0(GENCODE_dir, "filter.gencode.v34lift37.basic.")
+coding_mutations_dir <- paste0(sysdata_dir, "/output/coding_mutations/")
 
-# annotations_metadata
+# annotation weights
 # manually copied from
 # https://docs.google.com/spreadsheets/d/1De71B8qUdNge9jrH65GvryX6eYYHgdHy707HtDxyU2k/edit#gid=1075783341
-# > data/metadata.tsv
+# > data/weights.tsv
 
 # GENCODE
 pcENSGs <- read_tibble(paste0(GENCODE_dir, "proteincoding.gencode.v34lift37.basic.ENSGs.txt"))$V1
@@ -18,7 +18,7 @@ introns <- import_BED(gzfile(paste0(GENCODE_filter, "intron.bed.gz")), metadata_
 exons <- import_BED(gzfile(paste0(GENCODE_filter, "exon.bed.gz")), metadata_cols = "enst")
 
 # ChrSizes
-ChrSizes <- read_tibble(paste0(reference_panels_dir, "data/hg/hg19.genome"))
+ChrSizes <- read_tibble(paste0(sysdata_dir, "data/hg/hg19.genome"))
 names(ChrSizes) <- c("chrom", "size")
 
 # coding_mutations - deleterious coding variants

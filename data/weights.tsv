@@ -1,0 +1,36 @@
+annotation	level	ct_specific	weight	value	formula_description	prose_description
+c_inv_n_variants	c	FALSE	0.66	numeric	1 / ( n ( variants in the CS ) )	inverse of the number of variants in the credible set
+c_n_variants	c	FALSE	0.66	numeric	n ( variants in the CS )	number of variants in the credible set
+v_DHSs	v	FALSE	0.33	binary	the variant lies in a DHS	the variant lies in a DHS
+v_H3K27ac_signal	v	TRUE	0.33	numeric	binned signal of H3K27ac marks in the DHS of the variant	signal of H3K27ac in the DHS of the variant
+v_H3K27ac_specificity	v	TRUE	0.33	numeric	binned specificity of H3K27ac marks in the DHS of the variant	specificity of H3K27ac in the DHS of the variant
+v_inv_n_genes	v	FALSE	0.66	numeric	1 / ( n ( genes within 2Mb of the variant ) )	inverse of the number of genes within 2Mb of the variant
+v_inv_n_transcripts	v	FALSE	0.33	numeric	1 / ( n ( transcripts within 2Mb of the variant ) )	inverse of the number of transcripts within 2Mb of the variant
+g_expressed	g	TRUE	1.00	binary	( gene TPM ) > 0	the gene is expressed (TPM > 0)
+g_expression_signal	g	TRUE	1.00	numeric	binned signal of gene expression TPM	signal of gene expression in enriched cell types
+g_expression_specificity	g	TRUE	1.00	numeric	binned specificity of gene expression TPM	specificity of gene expression in enriched cell types
+t_DHSs	t	FALSE	0.33	binary	the transcript TSS lies in a DHS	the transcript TSS lies in a DHS
+t_H3K27ac_signal	t	TRUE	1.00	numeric	binned signal of H3K27ac marks in the DHS of the transcript TSS	signal of H3K27ac in the DHS of the transcript TSS
+t_H3K27ac_specificity	t	TRUE	0.33	numeric	binned specificity of H3K27ac marks in the DHS of the transcript TSS	specificity of H3K27ac in the DHS of the transcript TSS
+cxg_inv_distance	cxg	FALSE	1.00	numeric	1 / ( min ( distances between all variants of the CS and all TSSs of the gene ) )	inverse of the minimum of the distances between all variants of the CS and all TSSs of the gene
+cxg_inv_distance_rank	cxg	FALSE	1.00	numeric	1 / ( rank ( min ( distances between all variants of the CS and all TSSs of the gene ) ) )	inverse of the rank of the minimum of the distances between all variants of the CS and all TSSs of the gene
+cxt_n_multiHiChIP_binary_scores	cxt	TRUE	0.33	binary	( n ( HiChIP loops connecting the CS and the transcript TSS ) ) > 1	there are multiple HiChIP loops connecting variants of the CS with the transcript TSS
+cxt_n_multiHiChIP_scores	cxt	TRUE	0.33	numeric	n ( HiChIP loops connecting the CS and the transcript TSS )	number of HiChIP loops connecting variants of the CS with the transcript TSS
+cxt_sum_multiHiChIP_scores	cxt	TRUE	0.33	numeric	sum ( scores of HiCHIP loops connecting the CS and the transcript TSS )	sum of the scores of the HiChIP loops connecting variants of the CS with the transcript TSS
+vxg_closest	vxg	FALSE	0.33	binary	rank ( min ( distances between the variant and all TSSs of the gene ) ) == 1	the gene is the closest gene to the variant
+vxg_inv_distance	vxg	FALSE	0.33	numeric	1 / ( min ( distances between the variant and all TSSs of the gene ) )	inverse of the minimum of the distances between the variant and all TSSs of the gene
+vxg_inv_distance_rank	vxg	FALSE	0.33	numeric	1 / ( rank ( min ( distances between the variant and all TSSs of the gene ) ) )	inverse of the rank of the minimum of the distances between the variant and all TSSs of the gene
+vxg_missense	vxg	FALSE	1.00	binary	the variant is a missense mutation of the gene and has REVEL score > 0.5	the variant is a missense mutation of the gene and has a REVEL score > 0.5
+vxg_nonsense	vxg	FALSE	1.00	binary	the variant is a nonsense mutation of the gene	the variant is a nonsense mutation of the gene
+vxg_splicesite	vxg	FALSE	1.00	binary	the variant is a splicesite mutation of the gene	the variant is a splice site mutation of the gene
+vxt_closest	vxt	FALSE	0.33	binary	rank ( distance between the transcript TSS and the variant ) == 1	the transcript TSS is the closest transcript TSS to the variant
+vxt_exon_or_inv_distance	vxt	FALSE	1.00	numeric	if the variant lies in an exon of the transcript, 1, if not, 1 / (distance between the transcript TSS and the variant)
+vxt_inv_distance	vxt	FALSE	1.00	numeric	1 / ( distance between the transcript TSS and the variant )	inverse of the distance between the transcript TSS and the variant
+vxt_inv_distance_rank	vxt	FALSE	0.33	numeric	1 / ( rank ( distance between the transcript TSS and the variant ) )	inverse of the rank of the distance between the transcript TSS and the variant
+vxt_exon	vxt	FALSE	0.33	binary	the variant lies in an exon of the transcript	the variant lies in an exon of the transcript
+vxt_HiChIP_binary	vxt	TRUE	0.33	binary	there is a HiChIP loop connecting the variant and the transcript TSS	there is a HiChIP loop connection the variant with the transcript TSS
+vxt_HiChIP_scores	vxt	TRUE	0.33	numeric	score of any HiChIP loop connecting the variant and the transcript TSS	score of any HiChIP loop connecting the variant with the transcript TSS
+vxt_intron	vxt	FALSE	1.00	binary	the variant lies in an intron of the transcript	the variant lies in an intron of the transcript
+vxt_promoter	vxt	FALSE	0.33	binary	the variant lies in the promoter of the transcript	the variant lies in the promoter of the transcript
+vxt_promoter_H3K27ac_bins_sum	vxt	TRUE	0.33	numeric	if the variant lies in the promoter of the transcript and lies in a DHS, sum the signal and specificity bins	if the variant lies in the promoter of the transcript and also lies in a DHS, sum of the H3K27ac signal and specificitiy values of the DHS
+vxt_TADs	vxt	TRUE	1.00	binary	the variant and the transcript TSS lie within the same TAD	the variant and the transcript TSS lie within the same TAD
