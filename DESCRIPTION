@@ -1,0 +1,34 @@
+Package: EG2
+Title: Evidence for GWAS Genes
+Version: 0.0.0.9000
+Authors@R: 
+    person(given = "Alexandra",
+           family = "Tidd",
+           role = c("aut", "cre"),
+           email = "Alexandra.Tidd@qimrberghofer.edu.au")
+Description: This Target Gene Prediction package links enhancer-resident variants to their putative target gene.
+License: MIT + file LICENSE
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 7.1.1
+Imports: 
+    magrittr,
+    valr,
+    rlang,
+    dplyr,
+    tidyr,
+    readr,
+    stringr,
+    tibble,
+    purrr,
+    utils,
+    yardstick,
+    xgboost,
+    Ckmeans.1d.dp,
+    ggsci,
+    ggrepel
+Depends:
+    R (>= 4.0.2)
+Suggests: 
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
