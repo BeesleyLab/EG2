@@ -242,26 +242,11 @@ predict_target_genes <- function(trait = NULL,
 
   weighted <- raw * weights[,1][match(colnames(raw), rownames(weights))][col(raw)]
 
-  # generating a score at cxg level from the maximum values of each annotation for each pair
-  # this is to see if taking the best piece of evidence for each cxg pair and combining them is best
-  score_cxg_max_annotations <- cbind(
-      vxt_master %>% dplyr::select(cs, variant, symbol, ensg, enst),
-      weighted) %>%
-    dplyr::as_tibble() %>%
-    dplyr::group_by(cs, symbol) %>%
-    dplyr::summarise(dplyr::across(colnames(weighted), max),
-                     .groups = "rowwise") %>%
-    dplyr::summarise(score_cxg_max_annotations = mean(dplyr::c_across(colnames(weighted))),
-                     .groups = "drop") %>%
-    {dplyr::left_join(vxt_master, ., by = c("cs", "symbol"))} %>%
-    dplyr::select(score_cxg_max_annotations)
-
   # all raw vxt annotations + scores (raw %>% weight %>% mean -> score)
   annotations <- cbind(
     vxt_master %>% dplyr::select(cs, variant, symbol, ensg, enst),
     score = rowMeans(weighted),
     score_expressed = rowMeans(weighted) * raw[, "g_expressed"],
-    score_cxg_max_annotations,
     raw) %>%
     # dplyr::mutate(vxt_exon_or_inv_distance_plus_HiChIP = vxt_exon_or_inv_distance + vxt_HiChIP_scores + cxt_n_multiHiChIP_scores) %>%
     dplyr::as_tibble() %>%
