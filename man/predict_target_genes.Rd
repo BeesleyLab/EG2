@@ -15,7 +15,7 @@ predict_target_genes(
   celltype_of_interest = NULL,
   tissue_of_interest = NULL,
   celltypes = "enriched_tissues",
-  variant_to_gene_max_distance = 2e+06,
+  max_variant_to_gene_distance = 2e+06,
   max_n_known_genes_per_CS = Inf,
   do_performance = T,
   do_XGBoost = F,
@@ -37,7 +37,7 @@ predict_target_genes(
 
 \item{reference_panels_dir}{The directory containing the external, accompanying reference panels data.}
 
-\item{weights_file}{A file of weights for annotations. Must contain `annotation` and `weight` columns. Default is data/weights.tsv.}
+\item{weights_file}{A file of weights for annotations. Must contain `annotation` and `weight` columns. Default is data/weights.tsv. If an annotation is missing from the weights_file, it will be weighted 0.}
 
 \item{celltype_of_interest}{Optional. The celltype(s) of interest for the trait. Only annotations in these celltypes will be used to make predictions. Argument(s) must match the names of celltypes in the metadata. Make sure the celltype of interest has coverage across all annotations (TADs, HiChIP, expression, H3K27ac) in the metadata table.}
 
@@ -45,9 +45,9 @@ predict_target_genes(
 
 \item{celltypes}{Dictates which celltypes' annotations are used. Must be one of c("enriched_celltypes", "enriched_tissues", "all_celltypes"). If "enriched_celltypes", annotations from only the enriched celltype(s) will be used. The enriched celltype(s) must have coverage across all annotations (TADs, HiChIP, expression, H3K27ac) in the metadata table for this to work. If "enriched_tissues", all annotations from the tissue of the enriched celltype(s) will be used. If "all_celltypes", the enrichment analysis is skipped and annotations from all available celltypes will be used. Default is "enriched_tissues".}
 
-\item{variant_to_gene_max_distance}{The maximum absolute distance (bp) across which variant-gene pairs are considered. Measured as the distance between the variant and the gene's TSS. Default is 2Mb. The HiChIP data is also already filtered to 2Mb.}
+\item{max_variant_to_gene_distance}{The maximum absolute distance (bp) across which variant-gene pairs are considered. Measured as the distance between the variant and the gene's TSS. Default is 2Mb. The HiChIP data is also already filtered to 2Mb.}
 
-\item{max_n_known_genes_per_CS}{In performance analysis, the maximum number of known genes within variant_to_gene_max_distance of the credible set.}
+\item{max_n_known_genes_per_CS}{In performance analysis, the maximum number of known genes within max_variant_to_gene_distance of the credible set.}
 
 \item{do_performance}{If TRUE, runs the performance chunk of the script, which measures the performance of the score and each of its constituent annotations in predicting known genes as the targets of nearby variants. Default is FALSE.}
 
