@@ -56,7 +56,7 @@ The scripts used to generate these data are published at <https://github.com/ale
 
 #### User-provided data
 
-There is one required user-provided file for the `predict_target_genes()` function: the trait variants (the `variants_file` argument). Known genes for the trait (the `known_genes_file` argument) are needed only if `do_performance = T`. Example files are published at <https://github.com/alextidd/tgp_paper/tree/main/wrangle_package_data/traits/output> for several tested traits. The scripts used to generate all trait files are published at <https://github.com/alextidd/tgp_paper/tree/main/wrangle_package_data/traits/code>.
+There is one required user-provided file for the `predict_target_genes()` function: the trait variants (the `variants_file` argument). Known genes for the trait (the `known_genes_file` argument) are needed only if `do_performance = T`. Example files can be found in `example_data/` for breast cancer. The scripts used to generate all trait files used in the study are published at <https://github.com/alextidd/tgp_paper/tree/main/wrangle_package_data/traits/code>.
 
 ##### Trait variants
 
