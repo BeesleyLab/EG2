@@ -116,28 +116,28 @@ predict_target_genes <- function(trait = NULL,
   # import the HiChIP data
   if (is.null(HiChIP)) {
     cat("  > Importing HiChIP data...\n")
-    HiChIP <- readRDS(paste0(reference_panels_dir, "HiChIP/HiChIP.rds"))
+    HiChIP <- readRDS(paste0(reference_panels_dir, "HiChIP.rds"))
   }
 
   # import the H3K27ac-x-DHS binning data
   if (is.null(H3K27ac)) {
     cat("  > Importing H3K27ac-x-DHS binning data...\n")
-    H3K27ac <- readRDS(paste0(reference_panels_dir, "H3K27ac/H3K27ac.rds"))
+    H3K27ac <- readRDS(paste0(reference_panels_dir, "H3K27ac.rds"))
   }
-  H3K27ac_specificity_ranked <- readRDS(paste0(reference_panels_dir, "H3K27ac/H3K27ac_specificity_rank.rds"))
+  H3K27ac_specificity_ranked <- readRDS(paste0(reference_panels_dir, "H3K27ac_specificity_rank.rds"))
 
   # import the expression data
   cat("  > Importing RNA-seq expression data...\n")
-  expression <- readRDS(paste0(reference_panels_dir, "expression/expression.rds"))
-  expressed <- readRDS(paste0(reference_panels_dir, "expression/expressed.rds"))
+  expression <- readRDS(paste0(reference_panels_dir, "expression.rds"))
+  expressed <- readRDS(paste0(reference_panels_dir, "expressed.rds"))
 
   # import DHSs master
   cat("  > Importing DHS data...\n")
-  DHSs <- readRDS(paste0(reference_panels_dir, "DHSs/DHSs.rds"))
+  DHSs <- readRDS(paste0(reference_panels_dir, "DHSs.rds"))
 
   # import the TADs data
   cat("  > Importing TAD data...\n")
-  TADs <- readRDS(paste0(reference_panels_dir, "TADs/TADs.rds"))
+  TADs <- readRDS(paste0(reference_panels_dir, "TADs.rds"))
 
   # 1) CELL TYPE ENRICHMENT ======================================================================================================
   cat("1) Performing cell type enrichment...\n")
