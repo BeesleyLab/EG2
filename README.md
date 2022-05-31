@@ -27,7 +27,7 @@ The weightings of annotations used to generate pair scores are stored as a TSV f
 
 ##### External reference data
 
-Larger cell type-specific reference data that accompany the package must be downloaded separately from OSF. In order to use the package, you must first download and unzip the data...
+Large cell type-specific reference data that accompany the EG2 package have been published to OSF (<https://osf.io/czyvr/>) and must be downloaded separately. In order to use the package, first download and unzip the data into a local directory...
 
 ``` bash
 mkdir path/to/EG2_data/
@@ -35,7 +35,7 @@ wget -O EG2_data.zip https://osf.io/czyvr/download --no-check-certificate
 unzip -d path/to/EG2_data/ EG2_data.zip
 ```
 
-...and then pass its location to the `reference_panels_dir` argument of the `predict_target_genes()` function.
+...and then pass the directory to the `reference_panels_dir` argument of the `predict_target_genes()` function.
 
 ``` r
 predict_target_genes(reference_panels_dir = "path/to/EG2_data/", ...)
