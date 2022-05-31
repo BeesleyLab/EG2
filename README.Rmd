@@ -7,6 +7,7 @@ output: github_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, eval = FALSE)
+library(EG2)
 ```
 
 ## predict_target_genes()
@@ -55,14 +56,16 @@ There is one required user-provided file for the `predict_target_genes()` functi
 ##### Trait variants 
 The variants file should be a BED file with metadata columns for the variant name and the credible set to which it belongs.
 ```{r variants_file example, eval = T}
-#variants_file <- system.file("example_data/variants.bed", package = "EG2")
-#EG2::import_BED(variants_file, metadata_cols = c("variant", "cs"))
+library(EG2)
+variants_file <- system.file("extdata", "variants.bed", package = "EG2")
+EG2::import_BED(variants_file, metadata_cols = c("variant", "cs"))
 ```
 
 ##### Trait known genes
 The known genes file should be a text file with a single column of known gene symbols. These symbols must be GENCODE-compatible.
 ```{r known_genes_file example, eval = T}
-#known_genes_file <- system.file("example_data/known_genes.txt", package = "EG2")
+library(EG2)
+known_genes_file <- system.file("extdata", "known_genes.txt", package = "EG2")
 #EG2::read_tibble(known_genes_file)
 ```
 

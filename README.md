@@ -63,16 +63,33 @@ There is one required user-provided file for the `predict_target_genes()` functi
 The variants file should be a BED file with metadata columns for the variant name and the credible set to which it belongs.
 
 ``` r
-#variants_file <- system.file("example_data/variants.bed", package = "EG2")
-#EG2::import_BED(variants_file, metadata_cols = c("variant", "cs"))
+library(EG2)
+variants_file <- system.file("extdata", "variants.bed", package = "EG2")
+EG2::import_BED(variants_file, metadata_cols = c("variant", "cs"))
 ```
+
+    ## # A tibble: 5,375 × 5
+    ##    chrom    start      end variant     cs         
+    ##    <chr>    <int>    <int> <chr>       <chr>      
+    ##  1 chr1  10551762 10551763 rs657244    BCAC_FM_1.1
+    ##  2 chr1  10563363 10563364 rs202087283 BCAC_FM_1.1
+    ##  3 chr1  10564674 10564675 rs2847344   BCAC_FM_1.1
+    ##  4 chr1  10566521 10566522 rs617728    BCAC_FM_1.1
+    ##  5 chr1  10569000 10569000 rs60354536  BCAC_FM_1.1
+    ##  6 chr1  10569257 10569258 rs2480785   BCAC_FM_1.1
+    ##  7 chr1  10579544 10579545 rs1411402   BCAC_FM_1.1
+    ##  8 chr1  10580890 10580891 rs2483677   BCAC_FM_1.1
+    ##  9 chr1  10581050 10581051 rs2506885   BCAC_FM_1.1
+    ## 10 chr1  10581657 10581658 rs2056417   BCAC_FM_1.1
+    ## # … with 5,365 more rows
 
 ##### Trait known genes
 
 The known genes file should be a text file with a single column of known gene symbols. These symbols must be GENCODE-compatible.
 
 ``` r
-#known_genes_file <- system.file("example_data/known_genes.txt", package = "EG2")
+library(EG2)
+known_genes_file <- system.file("extdata", "known_genes.txt", package = "EG2")
 #EG2::read_tibble(known_genes_file)
 ```
 

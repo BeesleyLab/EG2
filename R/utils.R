@@ -12,6 +12,7 @@
 
 # Read in data as tibbles for better printing
 #' @importFrom utils read.table
+#' @export
 read_tibble <- function(file, header = FALSE) {
   utils::read.delim(file,
                     header = header,
