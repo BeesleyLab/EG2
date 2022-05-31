@@ -13,9 +13,25 @@ EG2 is a package to predict the target genes of fine-mapped variants of a trait 
 ?predict_target_genes()
 ```
 
+### Installation
+
+In order to install and run this package yourself... 1. Install and load the devtools package.
+
+``` r
+install.packages("devtools")
+library(devtools)
+```
+
+1.  Install and load the EG2 package.
+
+``` r
+install_github("BeesleyLab/EG2")
+library(EG2)
+```
+
 ### Package data
 
-This package uses both reference genomic annotation datasets and user-provided trait-specific datasets. Genomic coordinates use the hg19 build. The package's BED handling follows UCSC's `bedtools` conventions, so it expects 0-based start positions and 1-based end positions.
+This package uses both reference genomic annotation datasets and user-provided trait-specific datasets. Genomic coordinates use the hg19 build. The package's BED handling follows UCSC BedTools conventions, so it expects 0-based start positions and 1-based end positions.
 
 #### Reference data
 
