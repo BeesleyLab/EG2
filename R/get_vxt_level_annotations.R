@@ -104,6 +104,11 @@ get_vxt_level_annotations <- function(variants,
     dplyr::transmute(cs, variant, enst,
                      value = dplyr::case_when(exon ~ 1,
                                            TRUE ~ value))
+  
+  # exonic or inv distance rank
+  vxt$exon_or_inv_distance_rank <- vxt$exon_or_inv_distance %>%
+    dplyr::group_by(cs, variant) %>%
+    dplyr::mutate(value = 1 / rank(-value, ties.method = "min"))
 
   # TADs
   TADs_w_ID <- enriched$TADs %>%
