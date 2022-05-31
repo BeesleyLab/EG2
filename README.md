@@ -15,16 +15,13 @@ EG2 is a package to predict the target genes of fine-mapped variants of a trait 
 
 ### Installation
 
-In order to install and run this package yourself... 1. Install and load the devtools package.
+In order to install and run this package yourself...
 
 ``` r
+# 1. Install and loaf the devtools package
 install.packages("devtools")
 library(devtools)
-```
-
-1.  Install and load the EG2 package.
-
-``` r
+# 2. Install and load the EG2 package
 install_github("BeesleyLab/EG2")
 library(EG2)
 ```
