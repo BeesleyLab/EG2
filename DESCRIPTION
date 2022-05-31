@@ -27,7 +27,7 @@ Imports:
     ggsci,
     ggrepel
 Depends:
-    R (>= 4.0.2)
+    R (>= 3.6.2)
 Suggests: 
     testthat (>= 3.0.0),
     xgboost
