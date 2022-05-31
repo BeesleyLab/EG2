@@ -45,7 +45,7 @@ predict_target_genes <- function(trait = NULL,
   args["H3K27ac"] <- list(NULL)
 
   # for testing internally:
-  # setwd("/working/lab_jonathb/alexandT/EG2") ; trait="BC_Michailidou2017_FM" ; celltypes = "enriched_tissues" ; variants_file=paste0("/working/lab_jonathb/alexandT/tgp_paper/wrangle_package_data/traits/output/",trait,"/variants.bed") ; known_genes_file = paste0("/working/lab_jonathb/alexandT/tgp_paper/wrangle_package_data/traits/output/",trait,"/known_genes.txt") ; reference_panels_dir = "/working/lab_jonathb/alexandT/tgp_paper/wrangle_package_data/reference_panels/output/" ; weights_file = "data/weights.tsv" ; max_variant_to_gene_distance = 2e6 ; max_n_known_genes_per_CS = Inf ; HiChIP = NULL ; H3K27ac = NULL ; celltype_of_interest = NULL ; tissue_of_interest = NULL ; out_dir = NULL ; sub_dir = NULL ; do_scoring = T ; do_performance = T ; do_XGBoost = T ; do_timestamp = F  ; library(devtools) ; load_all()
+  # setwd("/working/lab_jonathb/alexandT/EG2") ; trait="BC_Michailidou2017_FM" ; celltypes = "enriched_tissues" ; variants_file=paste0("/working/lab_jonathb/alexandT/tgp_paper/wrangle_package_data/traits/output/",trait,"/variants.bed") ; known_genes_file = paste0("/working/lab_jonathb/alexandT/tgp_paper/wrangle_package_data/traits/output/",trait,"/known_genes.txt") ; reference_panels_dir = "/working/lab_jonathb/alexandT/tgp_paper/wrangle_package_data/reference_panels/output/" ; weights_file = NULL ; max_variant_to_gene_distance = 2e6 ; max_n_known_genes_per_CS = Inf ; HiChIP = NULL ; H3K27ac = NULL ; celltype_of_interest = NULL ; tissue_of_interest = NULL ; out_dir = NULL ; sub_dir = NULL ; do_scoring = T ; do_performance = T ; do_XGBoost = T ; do_timestamp = F  ; library(devtools) ; load_all()
   # for internally restoring a previous run environment:
   # args <- dget("out/SC3_Chahal2016andSarin2020_LD/SKIN_tissue/arguments_for_predict_target_genes.R") ; list2env(args, envir=.GlobalEnv) ; library(devtools) ; load_all()
 
@@ -225,6 +225,7 @@ predict_target_genes <- function(trait = NULL,
       if(ncol(a) > 1) {apply(a, 1, max)} else {a[,1]}
       })
   }}
+  saveRDS(raw, paste0(out$base, "raw.rds"))
 
   # get weights
   if(is.null(weights_file)){
@@ -235,14 +236,14 @@ predict_target_genes <- function(trait = NULL,
       dplyr::select(annotation, weight) %>%
       tibble::column_to_rownames("annotation") %>%
       as.matrix
-    missing_weights <- setdiff(names(master), rownames(weights))
-    if(length(missing_weights) > 0){
-      message("Annotation(s)\n  > ", paste(setdiff(names(master), rownames(weights)), collapse = "\n > "),
-              "\ndo not have a weight in ", weights_file, ". Weighting as 0.")
-      zero_weights <- matrix(rep(0, length(missing_weights)))
-      rownames(zero_weights) <- missing_weights
-      weights <- rbind(weights, zero_weights)
-    }
+  }
+  missing_weights <- setdiff(names(master), rownames(weights))
+  if(length(missing_weights) > 0){
+    message("Annotation(s)\n > ", paste(setdiff(names(master), rownames(weights)), collapse = "\n > "),
+            "\ndo not have a weight in ", weights_file, ". Weighting as 0.")
+    zero_weights <- matrix(rep(0, length(missing_weights)))
+    rownames(zero_weights) <- missing_weights
+    weights <- rbind(weights, zero_weights)
   }
   
   # weighted annotations

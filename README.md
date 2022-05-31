@@ -56,45 +56,25 @@ The scripts used to generate these data are published at <https://github.com/ale
 
 #### User-provided data
 
-There is one required user-provided file for the `predict_target_genes()` function: the trait variants (the `variants_file` argument). Known genes for the trait (the `known_genes_file` argument) are needed only if `do_performance = T`. Example files can be found in `example_data/` for breast cancer. The scripts used to generate all trait files used in the study are published at <https://github.com/alextidd/tgp_paper/tree/main/wrangle_package_data/traits/code>.
+There is one required user-provided file for the `predict_target_genes()` function: the trait variants (the `variants_file` argument). Known genes for the trait (the `known_genes_file` argument) are needed only if `do_performance = T`. Example files can be found in `inst/extdata/` for breast cancer. The scripts to generate these and all other trait files used in the study are published at <https://github.com/alextidd/tgp_paper/tree/main/wrangle_package_data/traits/code>.
 
 ##### Trait variants
 
 The variants file should be a BED file with metadata columns for the variant name and the credible set to which it belongs.
 
-``` bash
-head /working/lab_jonathb/alexandT/EG2/example_data/variants.bed
+``` r
+#variants_file <- system.file("example_data/variants.bed", package = "EG2")
+#EG2::import_BED(variants_file, metadata_cols = c("variant", "cs"))
 ```
-
-    ## chr1 10551762    10551763    rs657244    BCAC_FM_1.1
-    ## chr1 10563363    10563364    rs202087283 BCAC_FM_1.1
-    ## chr1 10564674    10564675    rs2847344   BCAC_FM_1.1
-    ## chr1 10566521    10566522    rs617728    BCAC_FM_1.1
-    ## chr1 10569000    10569000    rs60354536  BCAC_FM_1.1
-    ## chr1 10569257    10569258    rs2480785   BCAC_FM_1.1
-    ## chr1 10579544    10579545    rs1411402   BCAC_FM_1.1
-    ## chr1 10580890    10580891    rs2483677   BCAC_FM_1.1
-    ## chr1 10581050    10581051    rs2506885   BCAC_FM_1.1
-    ## chr1 10581657    10581658    rs2056417   BCAC_FM_1.1
 
 ##### Trait known genes
 
 The known genes file should be a text file with a single column of known gene symbols. These symbols must be GENCODE-compatible.
 
-``` bash
-head /working/lab_jonathb/alexandT/EG2/example_data/known_genes.txt
+``` r
+#known_genes_file <- system.file("example_data/known_genes.txt", package = "EG2")
+#EG2::read_tibble(known_genes_file)
 ```
-
-    ## AKT1
-    ## ARID1A
-    ## ATM
-    ## BRCA1
-    ## BRCA2
-    ## CBFB
-    ## CDH1
-    ## CDKN1B
-    ## CHEK2
-    ## CTCF
 
 ##### Alternative Weights
 
