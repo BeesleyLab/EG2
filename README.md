@@ -34,9 +34,7 @@ This package uses both reference genomic annotation datasets and user-provided t
 
 ##### Internal reference data
 
-Smaller generic reference datasets, including chromosome sizes, GENCODE annotations and coding mutation annotations (`ChrSizes`, `TSSs`, `exons`, `introns`, `promoters`, `missense`, `nonsense`, `splicesite`) are stored internally as parsed objects in `R/sysdata.R`. They are accessible when the package is loaded, but not visible due to lazy loading. The scripts used to generate the input files are published at <https://github.com/alextidd/tgp_paper/tree/main/wrangle_package_data/sysdata/code>.
-
-The weightings of annotations used to generate pair scores are stored as a TSV file in data/weights.tsv.
+Smaller generic reference datasets, including default annotation weights, chromosome sizes, GENCODE annotations and coding mutation annotations (`default_weights`, `ChrSizes`, `TSSs`, `exons`, `introns`, `promoters`, `missense`, `nonsense`, `splicesite`) are stored internally as parsed objects in `R/sysdata.R`. They are accessible when the package is loaded, but not visible due to lazy loading. The scripts used to generate the input files are published at <https://github.com/alextidd/tgp_paper/tree/main/wrangle_package_data/sysdata/code>.
 
 ##### External reference data
 
@@ -65,25 +63,45 @@ There is one required user-provided file for the `predict_target_genes()` functi
 The variants file should be a BED file with metadata columns for the variant name and the credible set to which it belongs.
 
 ``` bash
-head path/to/trait/variants.bed
-chr1    10551762        10551763        rs657244        BCAC_FM_1.1
-chr1    10563363        10563364        rs202087283     BCAC_FM_1.1
-chr1    10564674        10564675        rs2847344       BCAC_FM_1.1
-chr1    10566521        10566522        rs617728        BCAC_FM_1.1
-chr1    10569000        10569000        rs60354536      BCAC_FM_1.1
+head /working/lab_jonathb/alexandT/EG2/example_data/variants.bed
 ```
+
+    ## chr1 10551762    10551763    rs657244    BCAC_FM_1.1
+    ## chr1 10563363    10563364    rs202087283 BCAC_FM_1.1
+    ## chr1 10564674    10564675    rs2847344   BCAC_FM_1.1
+    ## chr1 10566521    10566522    rs617728    BCAC_FM_1.1
+    ## chr1 10569000    10569000    rs60354536  BCAC_FM_1.1
+    ## chr1 10569257    10569258    rs2480785   BCAC_FM_1.1
+    ## chr1 10579544    10579545    rs1411402   BCAC_FM_1.1
+    ## chr1 10580890    10580891    rs2483677   BCAC_FM_1.1
+    ## chr1 10581050    10581051    rs2506885   BCAC_FM_1.1
+    ## chr1 10581657    10581658    rs2056417   BCAC_FM_1.1
 
 ##### Trait known genes
 
 The known genes file should be a text file with a single column of known gene symbols. These symbols must be GENCODE-compatible.
 
 ``` bash
-head path/to/trait/known_genes.txt
-AKT1
-ARID1A
-ATM
-BRCA1
-BRCA2
+head /working/lab_jonathb/alexandT/EG2/example_data/known_genes.txt
+```
+
+    ## AKT1
+    ## ARID1A
+    ## ATM
+    ## BRCA1
+    ## BRCA2
+    ## CBFB
+    ## CDH1
+    ## CDKN1B
+    ## CHEK2
+    ## CTCF
+
+##### Alternative Weights
+
+The full annotation weights and descriptions are stored as a TSV file in data/weights.tsv. A file of alternative weights for annotations can be passed to `weights_file`. The file must be tab-delimited and contain `annotation` and `weight` columns. If an annotation is missing from the `weights_file`, it will be weighted 0.
+
+``` r
+predict_target_genes(weights_file = "path/to/alternative/weights.tsv", ...)
 ```
 
 ### Running predict\_target\_genes()
@@ -93,13 +111,13 @@ To run `predict_target_genes()`...
 ``` r
 annotations <- predict_target_genes(
   trait = "BC_Michailidou2017_FM",
-  variants_file = "path/to/trait/variants.bed",
-  known_genes_file = "path/to/trait/known_genes.txt",
+  variants_file = "example_data/variants.bed",
+  known_genes_file = "example_data/known_genes.txt",
   reference_panels_dir = "path/to/EG2_data/"
   )
 ```
 
-Unless an `out_dir` argument is passed, the results will be saved to "out/${trait}/${celltypes}/". If `sub_dir` is passed, then run results will be saved to a subdirectory below this. If `do_timestamp = T`, then the run results will be saved to a time-stamped subdirectory.
+Unless an `out_dir` argument is passed, the results will be saved to "out/${trait}/${celltypes}/". If a `sub_dir` is passed, then run results will be saved to a subdirectory below this. If `do_timestamp = T`, then the run results will be saved to a time-stamped subdirectory.
 
 If you are calling `predict_target_genes()` repeatedly in the same session, you can load the large reference objects `H3K27ac` and `HiChIP` into the global environment once, and then pass them to the function pre-loaded. This prevents redundant re-loading with each call to `predict_target_genes()`.
 

@@ -8,7 +8,7 @@
 #' @param variants_file A BED file of trait-associated variants grouped by association signal, for example SNPs correlated with an index variant, or credible sets of fine-mapped variants
 #' @param known_genes_file Optional. The file containing a list of trait known gene symbols. If do_performance is TRUE, must provide a known_genes_file.
 #' @param reference_panels_dir The directory containing the external, accompanying reference panels data.
-#' @param weights_file A file of weights for annotations. Must contain `annotation` and `weight` columns. Default is data/weights.tsv. If an annotation is missing from the weights_file, it will be weighted 0.
+#' @param weights_file A file of alternative weights for annotations. Must contain `annotation` and `weight` columns. Default is data/weights.tsv. If an annotation is missing from the weights_file, it will be weighted 0.
 #' @param celltype_of_interest Optional. The celltype(s) of interest for the trait. Only annotations in these celltypes will be used to make predictions. Argument(s) must match the names of celltypes in the metadata. Make sure the celltype of interest has coverage across all annotations (TADs, HiChIP, expression, H3K27ac) in the metadata table.
 #' @param tissue_of_interest Optional. The tissue(s) of interest for the trait. Only annotations in these tissues will be used to make predictions.  Argument(s) must match the names of tissues in the metadata.
 #' @param max_variant_to_gene_distance The maximum absolute distance (bp) across which variant-gene pairs are considered. Measured as the distance between the variant and the gene's TSS. Default is 2Mb. The HiChIP data is also already filtered to 2Mb.
@@ -27,7 +27,7 @@ predict_target_genes <- function(trait = NULL,
                                  variants_file = NULL,
                                  known_genes_file = NULL,
                                  reference_panels_dir = NULL,
-                                 weights_file = "data/weights.tsv",
+                                 weights_file = NULL,
                                  celltype_of_interest = NULL,
                                  tissue_of_interest = NULL,
                                  celltypes = "enriched_tissues",
@@ -226,20 +226,26 @@ predict_target_genes <- function(trait = NULL,
       })
   }}
 
-  # weighted annotations
-  weights <- read_tibble(weights_file, header = T) %>%
-    dplyr::select(annotation, weight) %>%
-    tibble::column_to_rownames("annotation") %>%
-    as.matrix
-  missing_weights <- setdiff(names(master), rownames(weights))
-  if(length(missing_weights) > 0){
-    message("Annotation(s)\n  > ", paste(setdiff(names(master), rownames(weights)), collapse = "\n > "),
-            "\ndo not have a weight in ", weights_file,". Weighting as 0.")
-    zero_weights <- matrix(rep(0, length(missing_weights)))
-    rownames(zero_weights) <- missing_weights
-    weights <- rbind(weights, zero_weights)
+  # get weights
+  if(is.null(weights_file)){
+    weights <- default_weights
+  } else {
+    cat("  > Importing custom weights from ", weights_file, "...\n")
+    weights <- read_tibble(weights_file, header = T) %>%
+      dplyr::select(annotation, weight) %>%
+      tibble::column_to_rownames("annotation") %>%
+      as.matrix
+    missing_weights <- setdiff(names(master), rownames(weights))
+    if(length(missing_weights) > 0){
+      message("Annotation(s)\n  > ", paste(setdiff(names(master), rownames(weights)), collapse = "\n > "),
+              "\ndo not have a weight in ", weights_file, ". Weighting as 0.")
+      zero_weights <- matrix(rep(0, length(missing_weights)))
+      rownames(zero_weights) <- missing_weights
+      weights <- rbind(weights, zero_weights)
+    }
   }
-
+  
+  # weighted annotations
   weighted <- raw * weights[,1][match(colnames(raw), rownames(weights))][col(raw)]
 
   # all raw vxt annotations + scores (raw %>% weight %>% mean -> score)
