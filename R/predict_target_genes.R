@@ -8,11 +8,11 @@
 #' @param variants_file A BED file of trait-associated variants grouped by association signal, for example SNPs correlated with an index variant, or credible sets of fine-mapped variants
 #' @param known_genes_file Optional. The file containing a list of trait known gene symbols. If do_performance is TRUE, must provide a known_genes_file.
 #' @param reference_panels_dir The directory containing the external, accompanying reference panels data.
-#' @param weights_file A file of weights for annotations. Must contain `annotation` and `weight` columns. Default is data/weights.tsv.
+#' @param weights_file A file of weights for annotations. Must contain `annotation` and `weight` columns. Default is data/weights.tsv. If an annotation is missing from the weights_file, it will be weighted 0.
 #' @param celltype_of_interest Optional. The celltype(s) of interest for the trait. Only annotations in these celltypes will be used to make predictions. Argument(s) must match the names of celltypes in the metadata. Make sure the celltype of interest has coverage across all annotations (TADs, HiChIP, expression, H3K27ac) in the metadata table.
 #' @param tissue_of_interest Optional. The tissue(s) of interest for the trait. Only annotations in these tissues will be used to make predictions.  Argument(s) must match the names of tissues in the metadata.
-#' @param variant_to_gene_max_distance The maximum absolute distance (bp) across which variant-gene pairs are considered. Measured as the distance between the variant and the gene's TSS. Default is 2Mb. The HiChIP data is also already filtered to 2Mb.
-#' @param max_n_known_genes_per_CS In performance analysis, the maximum number of known genes within variant_to_gene_max_distance of the credible set.
+#' @param max_variant_to_gene_distance The maximum absolute distance (bp) across which variant-gene pairs are considered. Measured as the distance between the variant and the gene's TSS. Default is 2Mb. The HiChIP data is also already filtered to 2Mb.
+#' @param max_n_known_genes_per_CS In performance analysis, the maximum number of known genes within max_variant_to_gene_distance of the credible set.
 #' @param celltypes Dictates which celltypes' annotations are used. Must be one of c("enriched_celltypes", "enriched_tissues", "all_celltypes"). If "enriched_celltypes", annotations from only the enriched celltype(s) will be used. The enriched celltype(s) must have coverage across all annotations (TADs, HiChIP, expression, H3K27ac) in the metadata table for this to work. If "enriched_tissues", all annotations from the tissue of the enriched celltype(s) will be used. If "all_celltypes", the enrichment analysis is skipped and annotations from all available celltypes will be used. Default is "enriched_tissues".
 #' @param do_performance If TRUE, runs the performance chunk of the script, which measures the performance of the score and each of its constituent annotations in predicting known genes as the targets of nearby variants. Default is FALSE.
 #' @param do_XGBoost If TRUE, runs the XGBoost chunk of the script, which generates a model to predict the targets of variants from all available annotations and rates the importance of each annotation. Default is FALSE.
@@ -31,7 +31,7 @@ predict_target_genes <- function(trait = NULL,
                                  celltype_of_interest = NULL,
                                  tissue_of_interest = NULL,
                                  celltypes = "enriched_tissues",
-                                 variant_to_gene_max_distance = 2e6,
+                                 max_variant_to_gene_distance = 2e6,
                                  max_n_known_genes_per_CS = Inf,
                                  do_performance = T,
                                  do_XGBoost = F,
@@ -45,7 +45,7 @@ predict_target_genes <- function(trait = NULL,
   args["H3K27ac"] <- list(NULL)
 
   # for testing internally:
-  # setwd("/working/lab_jonathb/alexandT/EG2") ; trait="BC_Michailidou2017_FM" ; celltypes = "enriched_tissues" ; variants_file=paste0("/working/lab_jonathb/alexandT/tgp_paper/wrangle_package_data/traits/output/",trait,"/variants.bed") ; known_genes_file = paste0("/working/lab_jonathb/alexandT/tgp_paper/wrangle_package_data/traits/output/",trait,"/known_genes.txt") ; reference_panels_dir = "/working/lab_jonathb/alexandT/tgp_paper/wrangle_package_data/reference_panels/output/" ; weights_file = "data/weights.tsv" ; variant_to_gene_max_distance = 2e6 ; max_n_known_genes_per_CS = Inf ; HiChIP = NULL ; H3K27ac = NULL ; celltype_of_interest = NULL ; tissue_of_interest = NULL ; out_dir = NULL ; sub_dir = NULL ; do_scoring = T ; do_performance = T ; do_XGBoost = T ; do_timestamp = F  ; library(devtools) ; load_all()
+  # setwd("/working/lab_jonathb/alexandT/EG2") ; trait="BC_Michailidou2017_FM" ; celltypes = "enriched_tissues" ; variants_file=paste0("/working/lab_jonathb/alexandT/tgp_paper/wrangle_package_data/traits/output/",trait,"/variants.bed") ; known_genes_file = paste0("/working/lab_jonathb/alexandT/tgp_paper/wrangle_package_data/traits/output/",trait,"/known_genes.txt") ; reference_panels_dir = "/working/lab_jonathb/alexandT/tgp_paper/wrangle_package_data/reference_panels/output/" ; weights_file = "data/weights.tsv" ; max_variant_to_gene_distance = 2e6 ; max_n_known_genes_per_CS = Inf ; HiChIP = NULL ; H3K27ac = NULL ; celltype_of_interest = NULL ; tissue_of_interest = NULL ; out_dir = NULL ; sub_dir = NULL ; do_scoring = T ; do_performance = T ; do_XGBoost = T ; do_timestamp = F  ; library(devtools) ; load_all()
   # for internally restoring a previous run environment:
   # args <- dget("out/BC_Michailidou2017_FM/enriched_tissues/arguments_for_predict_target_genes.R") ; list2env(args, envir=.GlobalEnv) ; library(devtools) ; load_all()
 
@@ -160,10 +160,10 @@ predict_target_genes <- function(trait = NULL,
   # get variant-to-gene universe
   cat("2) Finding all genes near variants...\n")
 
-  # The transcript-x-variant universe (masterlist of all possible transcript x variant pairs < variant_to_gene_max_distance apart)
+  # The transcript-x-variant universe (masterlist of all possible transcript x variant pairs < max_variant_to_gene_distance apart)
   vxt_master <- get_vxt_master(variants,
                                TSSs,
-                               variant_to_gene_max_distance)
+                               max_variant_to_gene_distance)
 
   # 3) ANNOTATING ======================================================================================================
   cat("3) Annotating variant-transcript pairs at every level...\n")
@@ -191,7 +191,6 @@ predict_target_genes <- function(trait = NULL,
   vxt <- get_vxt_level_annotations(variants,
                                    DHSs,
                                    vxt_master,
-                                   variant_to_gene_max_distance,
                                    enriched)
 
   cat("  > VxG\tAnnotating variant x gene pairs...\n")
@@ -327,7 +326,7 @@ predict_target_genes <- function(trait = NULL,
     title = paste0(
       "\nTrait = ", trait,
       "\nmax n known genes per CS = ", max_n_known_genes_per_CS,
-      "; max distance = ", variant_to_gene_max_distance,
+      "; max distance = ", max_variant_to_gene_distance,
       "\nEnrichment = ", enriched_dir
     ),
     subtitle = paste0(

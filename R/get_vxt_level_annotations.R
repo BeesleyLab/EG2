@@ -1,7 +1,6 @@
 get_vxt_level_annotations <- function(variants,
                                       DHSs,
                                       vxt_master,
-                                      variant_to_gene_max_distance,
                                       enriched) {
 
   vxt <- list()

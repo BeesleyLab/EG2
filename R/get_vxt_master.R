@@ -1,10 +1,10 @@
 get_vxt_master <- function(variants, 
                            TSSs,
-                           variant_to_gene_max_distance){
-  # The transcript-x-variant universe (masterlist of all possible transcript x variant pairs < variant_to_gene_max_distance apart)
+                           max_variant_to_gene_distance){
+  # The transcript-x-variant universe (masterlist of all possible transcript x variant pairs < max_variant_to_gene_distance apart)
   vxt_master <- variants %>%
     # all genes within 2Mb
-    valr::bed_slop(both = variant_to_gene_max_distance,
+    valr::bed_slop(both = max_variant_to_gene_distance,
                    genome = ChrSizes,
                    trim = T) %>%
     valr::bed_intersect(., TSSs,
