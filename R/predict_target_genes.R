@@ -225,7 +225,6 @@ predict_target_genes <- function(trait = NULL,
       if(ncol(a) > 1) {apply(a, 1, max)} else {a[,1]}
       })
   }}
-  saveRDS(raw, paste0(out$base, "raw.rds"))
 
   # get weights
   if(is.null(weights_file)){
