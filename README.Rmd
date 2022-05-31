@@ -50,18 +50,20 @@ predict_target_genes(reference_panels_dir = "path/to/EG2_data/", ...)
 The scripts used to generate these data are published at https://github.com/alextidd/tgp_paper/tree/main/wrangle_package_data/reference_panels/code.
 
 #### User-provided data
-There is one required user-provided file for the `predict_target_genes()` function: the trait variants (the `variants_file` argument). Known genes for the trait (the `known_genes_file` argument) are needed only if `do_performance = T`. Example files can be found in `example_data/` for breast cancer. The scripts used to generate all trait files used in the study are published at https://github.com/alextidd/tgp_paper/tree/main/wrangle_package_data/traits/code.
+There is one required user-provided file for the `predict_target_genes()` function: the trait variants (the `variants_file` argument). Known genes for the trait (the `known_genes_file` argument) are needed only if `do_performance = T`. Example files can be found in `inst/extdata/` for breast cancer. The scripts to generate these and all other trait files used in the study are published at https://github.com/alextidd/tgp_paper/tree/main/wrangle_package_data/traits/code.
 
 ##### Trait variants 
 The variants file should be a BED file with metadata columns for the variant name and the credible set to which it belongs.
-```{bash variants_file structure, eval = T}
-head /working/lab_jonathb/alexandT/EG2/example_data/variants.bed
+```{r variants_file example, eval = T}
+variants_file <- system.file("extdata", "variants.bed", package = "EG2")
+import_BED(variants_file, metadata_cols = c("variant", "cs"))
 ```
 
 ##### Trait known genes
 The known genes file should be a text file with a single column of known gene symbols. These symbols must be GENCODE-compatible.
-```{bash known_genes_file structure, eval = T}
-head /working/lab_jonathb/alexandT/EG2/example_data/known_genes.txt
+```{r known_genes_file example, eval = T}
+known_genes_file <- system.file("extdata", "known_genes.txt", package = "EG2")
+read_tibble(known_genes_file)
 ```
 
 ##### Alternative Weights
