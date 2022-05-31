@@ -6,7 +6,7 @@ Authors@R:
            family = "Tidd",
            role = c("aut", "cre"),
            email = "Alexandra.Tidd@qimrberghofer.edu.au")
-Description: This Target Gene Prediction package links enhancer-resident variants to their putative target gene.
+Description: This Target Gene Prediction package links GWAS variants to their putative target genes.
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
