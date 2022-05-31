@@ -3,9 +3,9 @@ get_cxt_level_annotations <- function(enriched,
                                       variants) {
 
   multiHiChIP_indep <- enriched$HiChIP %>% names %>%
-    sapply(function(celltype){
+    sapply(function(ct){
       # Intersect with the HiChIP data
-      enriched$HiChIP[[celltype]] %>%
+      enriched$HiChIP[[ct]] %>%
         intersect_BEDPE(
           # ! For mutually exclusive intersection with ranges, make variant intervals 1bp long, equal to the end position
           SNPend = variants %>% dplyr::mutate(start = end),
@@ -13,9 +13,10 @@ get_cxt_level_annotations <- function(enriched,
           bedpe = .) %>%
         dplyr::transmute(cs, variant, enst,
                          InteractionID,
-                         value = score)
+                         value = score,
+                         celltype = ct)
     }, simplify = F, USE.NAMES = T) %>%
-    dplyr::bind_rows(.id = "celltype") %>%
+    dplyr::bind_rows() %>%
     dplyr::group_by(celltype, cs, enst) %>%
     dplyr::distinct(InteractionID, value) %>%
     dplyr::summarise(n = dplyr::n_distinct(InteractionID),
@@ -30,7 +31,9 @@ get_cxt_level_annotations <- function(enriched,
     purrr::map(~ .x %>% tidyr::pivot_wider(id_cols = c(cs, enst),
                                            names_from = celltype,
                                            values_from = value))
-  names(multiHiChIP_indep) <- names(multiHiChIP_indep) %>% paste0("_multiHiChIP_indep")
+  if(length(multiHiChIP_indep)>0){
+    names(multiHiChIP_indep) <- names(multiHiChIP_indep) %>% paste0("_multiHiChIP_indep")
+  }
 
   # multiHiChIP statistics within each gene-x-cs-x-experiment combination
   multiHiChIP <- vxt[grepl("HiChIP", names(vxt)) & !grepl("binary", names(vxt))] %>%

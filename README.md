@@ -40,11 +40,11 @@ The weightings of annotations used to generate pair scores are stored as a TSV f
 
 ##### External reference data
 
-Large cell type-specific reference data that accompany the EG2 package have been published to OSF (<https://osf.io/czyvr/>) and must be downloaded separately. In order to use the package, first download and unzip the data into a local directory...
+Large cell type-specific reference data that accompany the EG2 package have been published to OSF (<https://osf.io/254nq/>) and must be downloaded separately. In order to use the package, first download and unzip the data into a local directory...
 
 ``` bash
 mkdir path/to/EG2_data/
-wget -O EG2_data.zip https://osf.io/czyvr/download --no-check-certificate
+wget -O EG2_data.zip https://osf.io/254nq/download --no-check-certificate
 unzip -d path/to/EG2_data/ EG2_data.zip
 ```
 

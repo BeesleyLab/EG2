@@ -47,7 +47,7 @@ predict_target_genes <- function(trait = NULL,
   # for testing internally:
   # setwd("/working/lab_jonathb/alexandT/EG2") ; trait="BC_Michailidou2017_FM" ; celltypes = "enriched_tissues" ; variants_file=paste0("/working/lab_jonathb/alexandT/tgp_paper/wrangle_package_data/traits/output/",trait,"/variants.bed") ; known_genes_file = paste0("/working/lab_jonathb/alexandT/tgp_paper/wrangle_package_data/traits/output/",trait,"/known_genes.txt") ; reference_panels_dir = "/working/lab_jonathb/alexandT/tgp_paper/wrangle_package_data/reference_panels/output/" ; weights_file = "data/weights.tsv" ; max_variant_to_gene_distance = 2e6 ; max_n_known_genes_per_CS = Inf ; HiChIP = NULL ; H3K27ac = NULL ; celltype_of_interest = NULL ; tissue_of_interest = NULL ; out_dir = NULL ; sub_dir = NULL ; do_scoring = T ; do_performance = T ; do_XGBoost = T ; do_timestamp = F  ; library(devtools) ; load_all()
   # for internally restoring a previous run environment:
-  # args <- dget("out/BC_Michailidou2017_FM/enriched_tissues/arguments_for_predict_target_genes.R") ; list2env(args, envir=.GlobalEnv) ; library(devtools) ; load_all()
+  # args <- dget("out/SC3_Chahal2016andSarin2020_LD/SKIN_tissue/arguments_for_predict_target_genes.R") ; list2env(args, envir=.GlobalEnv) ; library(devtools) ; load_all()
 
   # SETUP ======================================================================================================
 

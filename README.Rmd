@@ -39,10 +39,10 @@ Smaller generic reference datasets, including chromosome sizes, GENCODE annotati
 The weightings of annotations used to generate pair scores are stored as a TSV file in data/weights.tsv.
 
 ##### External reference data
-Large cell type-specific reference data that accompany the EG2 package have been published to OSF (https://osf.io/czyvr/) and must be downloaded separately. In order to use the package, first download and unzip the data into a local directory...
+Large cell type-specific reference data that accompany the EG2 package have been published to OSF (https://osf.io/254nq/) and must be downloaded separately. In order to use the package, first download and unzip the data into a local directory...
 ```{bash OSF wget}
 mkdir path/to/EG2_data/
-wget -O EG2_data.zip https://osf.io/czyvr/download --no-check-certificate
+wget -O EG2_data.zip https://osf.io/254nq/download --no-check-certificate
 unzip -d path/to/EG2_data/ EG2_data.zip
 ```
 ...and then pass the directory to the `reference_panels_dir` argument of the `predict_target_genes()` function. 
