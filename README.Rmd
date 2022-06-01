@@ -5,7 +5,7 @@ date: "May 31, 2022"
 output: github_document
 ---
 
-```{r setup, include=FALSE}
+```{r setup, include = FALSE}
 knitr::opts_chunk$set(echo = TRUE, eval = FALSE)
 library(EG2)
 ```
@@ -35,7 +35,7 @@ This package uses both reference genomic annotation datasets and user-provided t
 
 #### Reference data
 ##### Internal reference data
-Smaller generic reference datasets, including chromosome sizes, GENCODE annotations and coding mutation annotations (`ChrSizes`, `TSSs`, `exons`, `introns`, `promoters`, `missense`, `nonsense`, `splicesite`) are stored internally as parsed objects in `R/sysdata.R`. These are internal to the package and not accessible to the user. The scripts used to generate the input files are published at https://github.com/alextidd/tgp_paper/tree/main/wrangle_package_data/sysdata/code.
+Smaller generic reference datasets, including chromosome sizes, GENCODE annotations and coding mutation annotations (`ChrSizes`, `TSSs`, `exons`, `introns`, `promoters`, `missense`, `nonsense`, `splicesite`) are stored internally as parsed objects in `R/sysdata.R`. These are internal to the package and not accessible to the user. The scripts to generate the input files are published at https://github.com/alextidd/tgp_paper/tree/main/wrangle_package_data/sysdata/code.
 
 ##### External reference data
 Large cell type-specific reference data that accompany the EG2 package have been published to OSF (https://osf.io/254nq/) and must be downloaded separately. In order to use the package, first download and unzip the data into a local directory...
@@ -72,8 +72,12 @@ known_genes_file <- system.file("example_data", "known_genes.txt", package = "EG
 read.delim(known_genes_file, header = F)$V1
 ```
 
-##### Alternative Weights
-The full annotation weights and descriptions are stored as a raw TSV file in `example_data/`. These default weights can be accessed as a dataframe when `EG2` is loaded. 
+##### Alternative weights
+The full annotation weights and descriptions are stored as a raw TSV file in `example_data/`. 
+```{r weights file, eval = T}
+system.file("example_data", "default_weights.tsv", package = "EG2")
+```
+These default weights can be accessed as a dataframe when `EG2` is loaded. 
 ```{r weights, eval = T}
 default_weights
 ```
@@ -93,22 +97,19 @@ annotations <- predict_target_genes(
   )
 ```
 
-Unless an `out_dir` argument is passed, the results will be saved to "out/\$\{trait\}/\$\{celltypes\}/". If a `sub_dir` is passed, then run results will be saved to a subdirectory below this. If `do_timestamp = T`, then the run results will be saved to a time-stamped subdirectory. 
+Unless an `out_dir` argument is passed, the results will be saved to 'out/`trait`/`celltypes`/'. 
+If a `sub_dir` is passed, then run results will be saved to a subdirectory below this ('out/`trait`/`celltypes`/`sub_dir`/'). 
+If `do_timestamp = T`, then the run results will be saved to a time-stamped subdirectory. 
 
 If you are calling `predict_target_genes()` repeatedly in the same session, you can load the large reference objects `H3K27ac` and `HiChIP` into the global environment once, and then pass them to the function pre-loaded. This prevents redundant re-loading with each call to `predict_target_genes()`.
 ```{r pre-load reference objects}
-# 1. load large reference panel objects
+# 1. Load large reference panel objects
 HiChIP <- readRDS("path/to/EG2_data/HiChIP.rds")
 H3K27ac <- readRDS("path/to/EG2_data/H3K27ac.rds")
-# 2. pass objects to predict_target_genes for a quicker runtime
+# 2. Pass objects to predict_target_genes for a quicker runtime
 annotations <- predict_target_genes(
   HiChIP = HiChIP,
   H3K27ac = H3K27ac,
   ...
   )
 ```
-
-This package was written using package development conventions from <https://r-pkgs.org/>. 
-
-
-

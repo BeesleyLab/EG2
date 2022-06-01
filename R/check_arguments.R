@@ -13,7 +13,7 @@ check_arguments <- function(metadata,
   if (is.null(known_genes_file) & do_performance) {
     stop("`do_performance = TRUE` but no known_genes_file provided! Must provide the path to a file of known genes for performance analysis (`known_genes_file = path/to/known_genes_file`).") }
   if (is.null(reference_panels_dir)) {
-    stop("Must provide the path to the accompanying reference panels directory (`reference_panels_dir = path/to/reference_panels_dir/`)!") }
+    stop("Must provide the path to the accompanying reference panels directory (`reference_panels_dir = path/to/EG2_data/`)! Reference data can be downloaded from OSF. Visit https://github.com/BeesleyLab/EG2 for instructions.") }
   if (!is.null(celltype_of_interest)) {
     coi_annotations <- metadata %>% dplyr::filter(celltype == celltype_of_interest) %>% dplyr::pull(object) %>% unique
     if (celltype_of_interest %ni% metadata$celltype) {
@@ -27,7 +27,8 @@ check_arguments <- function(metadata,
   if (!is.null(tissue_of_interest)) {
     if (tissue_of_interest %ni% metadata$tissue) {
       stop("Provided tissue_of_interest '", tissue_of_interest, "' is not represented in the available data. Must be one of...\n", paste(unique(metadata$tissue), collapse = ", ")) } }
-  if (celltypes %ni% c("all_celltypes", "enriched_tissues", "enriched_celltypes")) {
-    stop("Provided celltypes argument '", celltypes, "' is not acceptable. Must be one of...\nall_celltypes, enriched_tissues, enriched_celltypes") }
+  allowed_celltypes <- c("all_celltypes", "enriched_tissues", "enriched_celltypes", "every_tissue")
+  if (celltypes %ni% allowed_celltypes) {
+    stop("Provided celltypes argument '", celltypes, "' is not acceptable. Must be one of...\n", paste(allowed_celltypes, collapse = ", ")) }
 
 }

@@ -34,7 +34,7 @@ This package uses both reference genomic annotation datasets and user-provided t
 
 ##### Internal reference data
 
-Smaller generic reference datasets, including chromosome sizes, GENCODE annotations and coding mutation annotations (`ChrSizes`, `TSSs`, `exons`, `introns`, `promoters`, `missense`, `nonsense`, `splicesite`) are stored internally as parsed objects in `R/sysdata.R`. These are internal to the package and not accessible to the user. The scripts used to generate the input files are published at <https://github.com/alextidd/tgp_paper/tree/main/wrangle_package_data/sysdata/code>.
+Smaller generic reference datasets, including chromosome sizes, GENCODE annotations and coding mutation annotations (`ChrSizes`, `TSSs`, `exons`, `introns`, `promoters`, `missense`, `nonsense`, `splicesite`) are stored internally as parsed objects in `R/sysdata.R`. These are internal to the package and not accessible to the user. The scripts to generate the input files are published at <https://github.com/alextidd/tgp_paper/tree/main/wrangle_package_data/sysdata/code>.
 
 ##### External reference data
 
@@ -114,7 +114,15 @@ read.delim(known_genes_file, header = F)$V1
 
 ##### Alternative Weights
 
-The full annotation weights and descriptions are stored as a raw TSV file in `example_data/`. These default weights can be accessed as a dataframe when `EG2` is loaded.
+The full annotation weights and descriptions are stored as a raw TSV file in `example_data/`.
+
+``` r
+system.file("example_data", "default_weights.tsv", package = "EG2")
+```
+
+    ## [1] "/mnt/backedup/home/alexandT/R/x86_64-pc-linux-gnu-library/4.0/EG2/example_data/default_weights.tsv"
+
+These default weights can be accessed as a dataframe when `EG2` is loaded.
 
 ``` r
 default_weights
@@ -149,7 +157,7 @@ annotations <- predict_target_genes(
   )
 ```
 
-Unless an `out_dir` argument is passed, the results will be saved to "out/${trait}/${celltypes}/". If a `sub_dir` is passed, then run results will be saved to a subdirectory below this. If `do_timestamp = T`, then the run results will be saved to a time-stamped subdirectory.
+Unless an `out_dir` argument is passed, the results will be saved to 'out/`trait`/`celltypes`/'. If a `sub_dir` is passed, then run results will be saved to a subdirectory below this ('out/`trait`/`celltypes`/`sub_dir`/'). If `do_timestamp = T`, then the run results will be saved to a time-stamped subdirectory.
 
 If you are calling `predict_target_genes()` repeatedly in the same session, you can load the large reference objects `H3K27ac` and `HiChIP` into the global environment once, and then pass them to the function pre-loaded. This prevents redundant re-loading with each call to `predict_target_genes()`.
 
@@ -164,5 +172,3 @@ annotations <- predict_target_genes(
   ...
   )
 ```
-
-This package was written using package development conventions from <https://r-pkgs.org/>.
