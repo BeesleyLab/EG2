@@ -63,7 +63,7 @@ There is one required user-provided file for the `predict_target_genes()` functi
 The variants file should be a BED file with metadata columns for the variant name and the credible set to which it belongs.
 
 ``` r
-library(EG2)
+#library(EG2)
 variants_file <- system.file("extdata", "variants.bed", package = "EG2")
 EG2::import_BED(variants_file, metadata_cols = c("variant", "cs"))
 ```
@@ -88,10 +88,17 @@ EG2::import_BED(variants_file, metadata_cols = c("variant", "cs"))
 The known genes file should be a text file with a single column of known gene symbols. These symbols must be GENCODE-compatible.
 
 ``` r
-library(EG2)
+#library(EG2)
 known_genes_file <- system.file("extdata", "known_genes.txt", package = "EG2")
-#EG2::read_tibble(known_genes_file)
+read.delim(known_genes_file, header = F)$V1
 ```
+
+    ##  [1] "AKT1"     "ARID1A"   "ATM"      "BRCA1"    "BRCA2"    "CBFB"    
+    ##  [7] "CDH1"     "CDKN1B"   "CHEK2"    "CTCF"     "ERBB2"    "ESR1"    
+    ## [13] "FGFR2"    "FOXA1"    "GATA3"    "GPS2"     "HS6ST1"   "KMT2C"   
+    ## [19] "KRAS"     "LRRC37A3" "MAP2K4"   "MAP3K1"   "NCOR1"    "NF1"     
+    ## [25] "NUP93"    "PALB2"    "PIK3CA"   "PTEN"     "RB1"      "RUNX1"   
+    ## [31] "SF3B1"    "STK11"    "TBX3"     "TP53"     "ZFP36L1"
 
 ##### Alternative Weights
 
