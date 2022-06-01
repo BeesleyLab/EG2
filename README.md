@@ -120,42 +120,15 @@ The full annotation weights and descriptions are stored as a raw TSV file in `ex
 default_weights
 ```
 
-    ##                                 weight
-    ## c_inv_n_variants                  0.66
-    ## c_n_variants                      0.66
-    ## v_DHSs                            0.33
-    ## v_H3K27ac_signal                  0.33
-    ## v_H3K27ac_specificity             0.33
-    ## v_inv_n_genes                     0.66
-    ## v_inv_n_transcripts               0.33
-    ## g_expressed                       1.00
-    ## g_expression_signal               1.00
-    ## g_expression_specificity          1.00
-    ## t_DHSs                            0.33
-    ## t_H3K27ac_signal                  1.00
-    ## t_H3K27ac_specificity             0.33
-    ## cxg_inv_distance                  1.00
-    ## cxg_inv_distance_rank             1.00
-    ## cxt_n_multiHiChIP_binary_scores   0.33
-    ## cxt_n_multiHiChIP_scores          0.33
-    ## cxt_sum_multiHiChIP_scores        0.33
-    ## vxg_closest                       0.33
-    ## vxg_inv_distance                  0.33
-    ## vxg_inv_distance_rank             0.33
-    ## vxg_missense                      1.00
-    ## vxg_nonsense                      1.00
-    ## vxg_splicesite                    1.00
-    ## vxt_closest                       0.33
-    ## vxt_exon_or_inv_distance          1.00
-    ## vxt_inv_distance                  1.00
-    ## vxt_inv_distance_rank             0.33
-    ## vxt_exon                          0.33
-    ## vxt_HiChIP_binary                 0.33
-    ## vxt_HiChIP_scores                 0.33
-    ## vxt_intron                        1.00
-    ## vxt_promoter                      0.33
-    ## vxt_promoter_H3K27ac_bins_sum     0.33
-    ## vxt_TADs                          1.00
+    ##                               weight
+    ## vxg_nonsense                     1.0
+    ## vxg_missense                     0.8
+    ## vxg_splicesite                   0.8
+    ## vxt_exon_or_inv_distance         0.6
+    ## vxt_TADs                         0.6
+    ## vxt_HiChIP_scores                0.6
+    ## vxt_promoter_H3K27ac_bins_sum    0.6
+    ## vxt_promoter                     0.5
 
 A file of alternative weights for annotations can be passed to `weights_file`. The file must be tab-delimited and contain `annotation` and `weight` columns. If an annotation is missing from the `weights_file`, it will be weighted 0.
 
