@@ -34,7 +34,7 @@ This package uses both reference genomic annotation datasets and user-provided t
 
 ##### Internal reference data
 
-Smaller generic reference datasets, including default annotation weights, chromosome sizes, GENCODE annotations and coding mutation annotations (`default_weights`, `ChrSizes`, `TSSs`, `exons`, `introns`, `promoters`, `missense`, `nonsense`, `splicesite`) are stored internally as parsed objects in `R/sysdata.R`. They are accessible when the package is loaded, but not visible due to lazy loading. The scripts used to generate the input files are published at <https://github.com/alextidd/tgp_paper/tree/main/wrangle_package_data/sysdata/code>.
+Smaller generic reference datasets, including chromosome sizes, GENCODE annotations and coding mutation annotations (`ChrSizes`, `TSSs`, `exons`, `introns`, `promoters`, `missense`, `nonsense`, `splicesite`) are stored internally as parsed objects in `R/sysdata.R`. These are internal to the package and not accessible to the user. The scripts used to generate the input files are published at <https://github.com/alextidd/tgp_paper/tree/main/wrangle_package_data/sysdata/code>.
 
 ##### External reference data
 
@@ -56,7 +56,7 @@ The scripts to generate these data are published at <https://github.com/alextidd
 
 #### User-provided data
 
-There is one required user-provided file for the `predict_target_genes()` function: the trait variants (the `variants_file` argument). Known genes for the trait (the `known_genes_file` argument) are needed only if `do_performance = T`. Example files for breast cancer are in `inst/example_data/`.
+There is one required user-provided file for the `predict_target_genes()` function: the trait variants (the `variants_file` argument). Known genes for the trait (the `known_genes_file` argument) are needed only if `do_performance = T`. Example files for breast cancer are in `example_data/`.
 
 ``` r
 system.file("example_data", "variants.bed", package = "EG2")
@@ -98,7 +98,7 @@ EG2::import_BED(variants_file, metadata_cols = c("variant", "cs"))
 
 ##### Trait known genes
 
-The known genes file should be a text file with a single column of known gene symbols. These symbols must be GENCODE-compatible.
+The known genes file should be a headerless text file with a single column of known gene symbols. These symbols must be GENCODE-compatible and protein-coding. Those that are not will be filtered out.
 
 ``` r
 known_genes_file <- system.file("example_data", "known_genes.txt", package = "EG2")
@@ -114,11 +114,48 @@ read.delim(known_genes_file, header = F)$V1
 
 ##### Alternative Weights
 
-The full annotation weights and descriptions are stored as a TSV file in `data/weights.tsv`. This can be accessed as a dataframe when `EG2` is loaded.
+The full annotation weights and descriptions are stored as a raw TSV file in `example_data/`. These default weights can be accessed as a dataframe when `EG2` is loaded.
 
 ``` r
 default_weights
 ```
+
+    ##                                 weight
+    ## c_inv_n_variants                  0.66
+    ## c_n_variants                      0.66
+    ## v_DHSs                            0.33
+    ## v_H3K27ac_signal                  0.33
+    ## v_H3K27ac_specificity             0.33
+    ## v_inv_n_genes                     0.66
+    ## v_inv_n_transcripts               0.33
+    ## g_expressed                       1.00
+    ## g_expression_signal               1.00
+    ## g_expression_specificity          1.00
+    ## t_DHSs                            0.33
+    ## t_H3K27ac_signal                  1.00
+    ## t_H3K27ac_specificity             0.33
+    ## cxg_inv_distance                  1.00
+    ## cxg_inv_distance_rank             1.00
+    ## cxt_n_multiHiChIP_binary_scores   0.33
+    ## cxt_n_multiHiChIP_scores          0.33
+    ## cxt_sum_multiHiChIP_scores        0.33
+    ## vxg_closest                       0.33
+    ## vxg_inv_distance                  0.33
+    ## vxg_inv_distance_rank             0.33
+    ## vxg_missense                      1.00
+    ## vxg_nonsense                      1.00
+    ## vxg_splicesite                    1.00
+    ## vxt_closest                       0.33
+    ## vxt_exon_or_inv_distance          1.00
+    ## vxt_inv_distance                  1.00
+    ## vxt_inv_distance_rank             0.33
+    ## vxt_exon                          0.33
+    ## vxt_HiChIP_binary                 0.33
+    ## vxt_HiChIP_scores                 0.33
+    ## vxt_intron                        1.00
+    ## vxt_promoter                      0.33
+    ## vxt_promoter_H3K27ac_bins_sum     0.33
+    ## vxt_TADs                          1.00
 
 A file of alternative weights for annotations can be passed to `weights_file`. The file must be tab-delimited and contain `annotation` and `weight` columns. If an annotation is missing from the `weights_file`, it will be weighted 0.
 
