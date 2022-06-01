@@ -167,44 +167,53 @@ predict_target_genes <- function(trait = NULL,
 
   # 3) ANNOTATING ======================================================================================================
   cat("3) Annotating variant-transcript pairs at every level...\n")
-
+  levels <- list()
+  
   cat("  > V\tAnnotating variants...\n")
-  v <- get_v_level_annotations(variants,
-                               H3K27ac,
-                               enriched,
-                               vxt_master,
-                               DHSs)
+  levels$v <- get_v_level_annotations(
+    variants,
+    H3K27ac,
+    enriched,
+    vxt_master,
+    DHSs)
 
   cat("  > T\tAnnotating transcripts...\n")
-  t <- get_t_level_annotations(TSSs,
-                               DHSs,
-                               enriched)
+  levels$t <- get_t_level_annotations(
+    TSSs,
+    DHSs,
+    enriched)
 
   cat("  > G\tAnnotating genes...\n")
-  g <- get_g_level_annotations(vxt_master,
-                               enriched)
+  levels$g <- get_g_level_annotations(
+    vxt_master,
+    enriched)
 
   cat("  > C\tAnnotating credible sets...\n")
-  c <- get_c_level_annotations(variants)
+  levels$c <- get_c_level_annotations(
+    variants)
 
   cat("  > VxT\tAnnotating variant x transcript pairs...\n")
-  vxt <- get_vxt_level_annotations(variants,
-                                   DHSs,
-                                   vxt_master,
-                                   enriched)
+  levels$vxt <- get_vxt_level_annotations(
+    variants,
+    DHSs,
+    vxt_master,
+    enriched)
 
   cat("  > VxG\tAnnotating variant x gene pairs...\n")
-  vxg <- get_vxg_level_annotations(variants,
-                                   vxt_master,
-                                   enriched)
+  levels$vxg <- get_vxg_level_annotations(
+    variants,
+    vxt_master,
+    enriched)
 
   cat("  > CxT\tAnnotating credible set x transcript pairs...\n")
-  cxt <- get_cxt_level_annotations(enriched,
-                                   vxt,
-                                   variants)
+  levels$cxt <- get_cxt_level_annotations(
+    enriched,
+    vxt,
+    variants)
 
   cat("  > CxG\tAnnotating credible set x gene pairs...\n")
-  cxg <- get_cxg_level_annotations(vxt_master)
+  levels$cxg <- get_cxg_level_annotations(
+    vxt_master)
 
   # 4) ALL ANNOTATIONS ======================================================================================================
   # Master list of variant-x-transcript annotations
@@ -212,8 +221,7 @@ predict_target_genes <- function(trait = NULL,
   # -> only variant-transcript combinations within 2Mb are included
   # -> rows match vxt_master
   cat("4) Generating master table of transcript x", trait, "variant pairs, with all annotation levels...\n")
-  master <- c(v, t, g, c, vxt, vxg, cxt, cxg) %>%
-    purrr::map(~ matricise_by_pair(., vxt_master))
+  master <- levels %>% purrr::map(~ matricise_by_pair(., vxt_master))
   
   # 5) SCORING ======================================================================================================
   cat("5) Scoring variant-gene pairs...\n")
