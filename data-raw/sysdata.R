@@ -5,15 +5,6 @@ GENCODE_dir <- paste0(sysdata_dir, "/output/GENCODE/")
 GENCODE_filter <- paste0(GENCODE_dir, "filter.gencode.v34lift37.basic.")
 coding_mutations_dir <- paste0(sysdata_dir, "/output/coding_mutations/")
 
-# default annotation weights
-# manually copied from
-# https://docs.google.com/spreadsheets/d/1De71B8qUdNge9jrH65GvryX6eYYHgdHy707HtDxyU2k/edit#gid=1075783341
-# > data/weights.tsv
-default_weights <- read_tibble("data/weights.tsv", header = T) %>%
-  dplyr::select(annotation, weight) %>%
-  tibble::column_to_rownames("annotation") %>%
-  as.matrix
-
 # GENCODE
 pcENSGs <- read_tibble(paste0(GENCODE_dir, "proteincoding.gencode.v34lift37.basic.ENSGs.txt"))$V1
 TSSs <- import_BED(gzfile(paste0(GENCODE_filter, "tss.bed.gz")), metadata_cols = c("ensg", "symbol", "enst"))
@@ -30,8 +21,7 @@ missense <- paste0(coding_mutations_dir, "missense.tsv") %>% read_tibble(header 
 nonsense <- paste0(coding_mutations_dir, "nonsense.tsv") %>% read_tibble(header = T)
 splicesite <- paste0(coding_mutations_dir, "splicesite.tsv") %>% read_tibble(header = T)
 
-usethis::use_data(default_weights,
-                  pcENSGs,
+usethis::use_data(pcENSGs,
                   TSSs,
                   promoters,
                   introns,

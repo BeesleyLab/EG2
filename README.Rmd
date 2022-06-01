@@ -35,7 +35,7 @@ This package uses both reference genomic annotation datasets and user-provided t
 
 #### Reference data
 ##### Internal reference data
-Smaller generic reference datasets, including default annotation weights, chromosome sizes, GENCODE annotations and coding mutation annotations (`default_weights`, `ChrSizes`, `TSSs`, `exons`, `introns`, `promoters`, `missense`, `nonsense`, `splicesite`) are stored internally as parsed objects in `R/sysdata.R`. They are accessible when the package is loaded, but not visible due to lazy loading. The scripts used to generate the input files are published at https://github.com/alextidd/tgp_paper/tree/main/wrangle_package_data/sysdata/code.
+Smaller generic reference datasets, including chromosome sizes, GENCODE annotations and coding mutation annotations (`ChrSizes`, `TSSs`, `exons`, `introns`, `promoters`, `missense`, `nonsense`, `splicesite`) are stored internally as parsed objects in `R/sysdata.R`. These are internal to the package and not accessible to the user. The scripts used to generate the input files are published at https://github.com/alextidd/tgp_paper/tree/main/wrangle_package_data/sysdata/code.
 
 ##### External reference data
 Large cell type-specific reference data that accompany the EG2 package have been published to OSF (https://osf.io/254nq/) and must be downloaded separately. In order to use the package, first download and unzip the data into a local directory...
@@ -48,10 +48,15 @@ unzip -d path/to/EG2_data/ EG2_data.zip
 ```{r reference_panels_dir}
 predict_target_genes(reference_panels_dir = "path/to/EG2_data/", ...)
 ```
-The scripts used to generate these data are published at https://github.com/alextidd/tgp_paper/tree/main/wrangle_package_data/reference_panels/code.
+The scripts to generate these data are published at https://github.com/alextidd/tgp_paper/tree/main/wrangle_package_data/reference_panels/code.
 
 #### User-provided data
-There is one required user-provided file for the `predict_target_genes()` function: the trait variants (the `variants_file` argument). Known genes for the trait (the `known_genes_file` argument) are needed only if `do_performance = T`. Example files can be found in `inst/extdata/` for breast cancer. The scripts to generate these and all other trait files used in the study are published at https://github.com/alextidd/tgp_paper/tree/main/wrangle_package_data/traits/code.
+There is one required user-provided file for the `predict_target_genes()` function: the trait variants (the `variants_file` argument). Known genes for the trait (the `known_genes_file` argument) are needed only if `do_performance = T`. Example files for breast cancer are in `example_data/`. 
+```{r example_data, eval = T}
+system.file("example_data", "variants.bed", package = "EG2")
+system.file("example_data", "known_genes.txt", package = "EG2")
+```
+The scripts to generate these and all other trait files used in the study are published at https://github.com/alextidd/tgp_paper/tree/main/wrangle_package_data/traits/code.
 
 ##### Trait variants 
 The variants file should be a BED file with metadata columns for the variant name and the credible set to which it belongs.
@@ -61,14 +66,17 @@ EG2::import_BED(variants_file, metadata_cols = c("variant", "cs"))
 ```
 
 ##### Trait known genes
-The known genes file should be a text file with a single column of known gene symbols. These symbols must be GENCODE-compatible.
+The known genes file should be a headerless text file with a single column of known gene symbols. These symbols must be GENCODE-compatible and protein-coding. Those that are not will be filtered out.
 ```{r known_genes_file example, eval = T}
 known_genes_file <- system.file("example_data", "known_genes.txt", package = "EG2")
 read.delim(known_genes_file, header = F)$V1
 ```
 
 ##### Alternative Weights
-The full annotation weights and descriptions are stored as a TSV file in data/weights.tsv. 
+The full annotation weights and descriptions are stored as a raw TSV file in `example_data/`. These default weights can be accessed as a dataframe when `EG2` is loaded. 
+```{r weights, eval = T}
+default_weights
+```
 A file of alternative weights for annotations can be passed to `weights_file`. The file must be tab-delimited and contain `annotation` and `weight` columns. If an annotation is missing from the `weights_file`, it will be weighted 0.
 ```{r alternative weights}
 predict_target_genes(weights_file = "path/to/alternative/weights.tsv", ...)

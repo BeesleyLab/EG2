@@ -18,7 +18,7 @@ EG2 is a package to predict the target genes of fine-mapped variants of a trait 
 In order to install and run this package yourself...
 
 ``` r
-# 1. Install and loaf the devtools package
+# 1. Install and load the devtools package
 install.packages("devtools")
 library(devtools)
 # 2. Install and load the EG2 package
@@ -52,19 +52,32 @@ unzip -d path/to/EG2_data/ EG2_data.zip
 predict_target_genes(reference_panels_dir = "path/to/EG2_data/", ...)
 ```
 
-The scripts used to generate these data are published at <https://github.com/alextidd/tgp_paper/tree/main/wrangle_package_data/reference_panels/code>.
+The scripts to generate these data are published at <https://github.com/alextidd/tgp_paper/tree/main/wrangle_package_data/reference_panels/code>.
 
 #### User-provided data
 
-There is one required user-provided file for the `predict_target_genes()` function: the trait variants (the `variants_file` argument). Known genes for the trait (the `known_genes_file` argument) are needed only if `do_performance = T`. Example files can be found in `inst/extdata/` for breast cancer. The scripts to generate these and all other trait files used in the study are published at <https://github.com/alextidd/tgp_paper/tree/main/wrangle_package_data/traits/code>.
+There is one required user-provided file for the `predict_target_genes()` function: the trait variants (the `variants_file` argument). Known genes for the trait (the `known_genes_file` argument) are needed only if `do_performance = T`. Example files for breast cancer are in `inst/example_data/`.
+
+``` r
+system.file("example_data", "variants.bed", package = "EG2")
+```
+
+    ## [1] "/mnt/backedup/home/alexandT/R/x86_64-pc-linux-gnu-library/4.0/EG2/example_data/variants.bed"
+
+``` r
+system.file("example_data", "known_genes.txt", package = "EG2")
+```
+
+    ## [1] "/mnt/backedup/home/alexandT/R/x86_64-pc-linux-gnu-library/4.0/EG2/example_data/known_genes.txt"
+
+The scripts to generate these and all other trait files used in the study are published at <https://github.com/alextidd/tgp_paper/tree/main/wrangle_package_data/traits/code>.
 
 ##### Trait variants
 
 The variants file should be a BED file with metadata columns for the variant name and the credible set to which it belongs.
 
 ``` r
-#library(EG2)
-variants_file <- system.file("extdata", "variants.bed", package = "EG2")
+variants_file <- system.file("example_data", "variants.bed", package = "EG2")
 EG2::import_BED(variants_file, metadata_cols = c("variant", "cs"))
 ```
 
@@ -88,8 +101,7 @@ EG2::import_BED(variants_file, metadata_cols = c("variant", "cs"))
 The known genes file should be a text file with a single column of known gene symbols. These symbols must be GENCODE-compatible.
 
 ``` r
-#library(EG2)
-known_genes_file <- system.file("extdata", "known_genes.txt", package = "EG2")
+known_genes_file <- system.file("example_data", "known_genes.txt", package = "EG2")
 read.delim(known_genes_file, header = F)$V1
 ```
 
@@ -102,7 +114,13 @@ read.delim(known_genes_file, header = F)$V1
 
 ##### Alternative Weights
 
-The full annotation weights and descriptions are stored as a TSV file in data/weights.tsv. A file of alternative weights for annotations can be passed to `weights_file`. The file must be tab-delimited and contain `annotation` and `weight` columns. If an annotation is missing from the `weights_file`, it will be weighted 0.
+The full annotation weights and descriptions are stored as a TSV file in `data/weights.tsv`. This can be accessed as a dataframe when `EG2` is loaded.
+
+``` r
+default_weights
+```
+
+A file of alternative weights for annotations can be passed to `weights_file`. The file must be tab-delimited and contain `annotation` and `weight` columns. If an annotation is missing from the `weights_file`, it will be weighted 0.
 
 ``` r
 predict_target_genes(weights_file = "path/to/alternative/weights.tsv", ...)
