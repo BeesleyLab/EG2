@@ -232,11 +232,18 @@ predict_target_genes <- function(trait = NULL,
     # max score per CS
     dplyr::group_by(cs) %>%
     dplyr::mutate(dplyr::across(dplyr::ends_with("_vxg"), 
-                                ~ as.numeric(.x == max(.x) & .x > 0), .names = "{.col}_max")) 
+                                ~ as.numeric(.x == max(.x) & .x > 0), .names = "{.col}_max"))
+  scores <- scores %>% 
+    # max protein-coding score per CS
+    dplyr::left_join(
+      scores %>% 
+        dplyr::filter(protein_coding) %>%
+        dplyr::mutate(dplyr::across(dplyr::ends_with("_vxg"),
+                                    ~ as.numeric(.x == max(.x) & .x > 0), .names = "{.col}_max_pc"))) %>%
+    dplyr::ungroup()
   
   saveRDS(tissue_annotations, out$annotations.rds)
-  write_tibble(predictions, filenames = paste0(out$base, "scores.tsv"))
-  
+  write_tibble(scores, filenames = paste0(out$base, "scores.tsv"))
 
   # saveRDS(annotations, out$annotations.rds)
   # write_tibble(annotations, filename = out$annotations)
