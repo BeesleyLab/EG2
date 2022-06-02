@@ -45,7 +45,7 @@ predict_target_genes <- function(trait = NULL,
   args["H3K27ac"] <- list(NULL)
 
   # for testing internally:
-  # setwd("/working/lab_jonathb/alexandT/EG2") ; trait="BC_Michailidou2017_FM" ; celltypes = "enriched_celltypes" ; variants_file=paste0("/working/lab_jonathb/alexandT/tgp_paper/wrangle_package_data/traits/output/",trait,"/variants.bed") ; known_genes_file = paste0("/working/lab_jonathb/alexandT/tgp_paper/wrangle_package_data/traits/output/",trait,"/known_genes.txt") ; reference_panels_dir = "/working/lab_jonathb/alexandT/tgp_paper/wrangle_package_data/reference_panels/output/" ; weights_file = NULL ; max_variant_to_gene_distance = 2e6 ; max_n_known_genes_per_CS = Inf ; HiChIP = NULL ; H3K27ac = NULL ; celltype_of_interest = NULL ; tissue_of_interest = NULL ; out_dir = NULL ; sub_dir = NULL ; do_scoring = T ; do_performance = T ; do_XGBoost = T ; do_timestamp = F  ; library(devtools) ; load_all()
+  # setwd("/working/lab_jonathb/alexandT/EG2") ; trait="BC_Michailidou2017_FM" ; celltypes = "all_celltypes" ; variants_file=paste0("/working/lab_jonathb/alexandT/tgp_paper/wrangle_package_data/traits/output/",trait,"/variants.bed") ; known_genes_file = paste0("/working/lab_jonathb/alexandT/tgp_paper/wrangle_package_data/traits/output/",trait,"/known_genes.txt") ; reference_panels_dir = "/working/lab_jonathb/alexandT/tgp_paper/wrangle_package_data/reference_panels/output/" ; weights_file = NULL ; max_variant_to_gene_distance = 2e6 ; max_n_known_genes_per_CS = Inf ; HiChIP = NULL ; H3K27ac = NULL ; celltype_of_interest = NULL ; tissue_of_interest = NULL ; out_dir = NULL ; sub_dir = NULL ; do_scoring = T ; do_performance = T ; do_XGBoost = T ; do_timestamp = F  ; library(devtools) ; load_all()
   # for internally restoring a previous run environment:
   # args <- dget("out/SC3_Chahal2016andSarin2020_LD/SKIN_tissue/arguments_for_predict_target_genes.R") ; list2env(args, envir=.GlobalEnv) ; library(devtools) ; load_all()
 
@@ -192,6 +192,9 @@ predict_target_genes <- function(trait = NULL,
   # 5) SCORING ======================================================================================================
   cat("5) Scoring variant-gene pairs...\n")
 
+  # get weights
+  weights <- get_weights(weights_file, master)
+  
   # split annotations into tissues
   tissue_annotations <- enriched$celltypes$tissue %>% unique %>%
     sapply(function(tissue){
@@ -203,7 +206,6 @@ predict_target_genes <- function(trait = NULL,
     }, USE.NAMES = T, simplify = F)
   
   # calculate tissue-level pair scores
-  weights <- get_weights(weights_file, master)
   tissue_scores <- tissue_annotations %>% names %>%
     sapply(function(tissue){
       tissue_annotations[[tissue]] %>%
@@ -223,28 +225,22 @@ predict_target_genes <- function(trait = NULL,
     # max score per vxg
     dplyr::group_by(cs, variant, symbol, ensg) %>%
     dplyr::mutate(dplyr::across(where(is.numeric), 
-                                ~ max(.x), .names = "{.col}_vxg")) %>%
+                                ~ max(.x), 
+                                .names = "{.col}_vxg")) %>%
     # max score per CS
     dplyr::group_by(cs) %>%
     dplyr::mutate(dplyr::across(dplyr::ends_with("_vxg"), 
-                                ~ as.numeric(.x == max(.x) & .x > 0), .names = "{.col}_max"))
-  scores <- scores %>% 
+                                ~ as.numeric(.x == max(.x) & .x > 0), 
+                                .names = "{.col}_max")) %>%
     # max protein-coding score per CS
-    dplyr::left_join(
-      scores %>% 
-        dplyr::filter(protein_coding) %>%
-        dplyr::mutate(dplyr::across(dplyr::ends_with("_vxg"),
-                                    ~ as.numeric(.x == max(.x) & .x > 0), .names = "{.col}_max_pc"))) %>%
+    dplyr::group_by(cs, protein_coding) %>%
+    dplyr::mutate(dplyr::across(dplyr::ends_with("_vxg"),
+                                ~ as.numeric(.x == max(.x) & protein_coding),
+                                .names = "{.col}_max_pc")) %>%
     dplyr::ungroup()
   
   saveRDS(tissue_annotations, out$annotations.rds)
   write_tibble(scores, filename = paste0(out$base, "scores.tsv"))
-
-  # saveRDS(annotations, out$annotations.rds)
-  # write_tibble(annotations, filename = out$annotations)
-  # write_tibble(predictions_full, filename = out$predictions_full)
-  # write_tibble(predictions_max, filename = out$predictions_max)
-  # write_tibble(predictions_max_pc, filename = out$predictions_max_pc)
 
   # 6) PERFORMANCE ======================================================================================================
   if(do_performance){
@@ -256,11 +252,10 @@ predict_target_genes <- function(trait = NULL,
     check_known_genes(known_genes_file)
 
   # Generate PR curves (model performance metric) (only testing protein-coding genes)
-  performance <- annotations %>%
+  performance <- scores %>%
+    dplyr::select(cs:enst, dplyr::ends_with("score")) %>%
     # get performance
-    get_PR(vxt_master, known_genes, pcENSGs, max_n_known_genes_per_CS) %>%
-    # add annotation level info
-    purrr::map(~ dplyr::mutate(., level = sub("_.*", "", prediction_method)))
+    get_PR(vxt_master, known_genes, pcENSGs, max_n_known_genes_per_CS)
 
   # plot extras
   weight_facets <- dplyr::tibble(prediction_method = unique(performance$summary$prediction_method)) %>%
@@ -285,7 +280,8 @@ predict_target_genes <- function(trait = NULL,
       "\n",
       paste(strwrap(
         paste0(
-          "Celltype(s) = ", enriched$celltypes$celltype %>% unique %>% paste(collapse = ", ")
+          "Celltype(s) = ", if(celltypes == "all_celltypes"){"all celltypes"}
+          else{enriched$celltypes$celltype %>% unique %>% paste(collapse = ", ")}
         ),
         width = 70
       ), collapse = "\n")
@@ -332,12 +328,10 @@ predict_target_genes <- function(trait = NULL,
     # F score max
     print(
       performance$summary %>%
-        dplyr::mutate(level = prediction_method %>% gsub("_.*", "", .),
-                      F_score = F_score %>% tidyr::replace_na(0)) %>%
+        dplyr::mutate(F_score = F_score %>% tidyr::replace_na(0)) %>%
         dplyr::distinct() %>%
         ggplot2::ggplot(ggplot2::aes(x = reorder(prediction_method, F_score),
-                                     y = F_score,
-                                     fill = level)) +
+                                     y = F_score)) +
         ggplot2::geom_col() +
         ggplot2::labs(x = "Predictor",
                       y = "F score") +
@@ -349,7 +343,6 @@ predict_target_genes <- function(trait = NULL,
     # performance metrics
     print(
       performance$summary %>%
-        dplyr::left_join(weight_facets, by = "prediction_method") %>%
         dplyr::mutate(dplyr::across(where(is.numeric), tidyr::replace_na, 0),
                       fsc = F_score) %>%
         tidyr::pivot_longer(cols = c(F_score, score_PR_AUC, Precision, Recall),
@@ -357,12 +350,13 @@ predict_target_genes <- function(trait = NULL,
                             values_to = "performance") %>%
         ggplot2::ggplot(ggplot2::aes(x = reorder(prediction_method, fsc),
                                      y = performance,
-                                     fill = level)) +
+                                     fill = prediction_method)) +
         ggplot2::geom_col() +
-        ggplot2::facet_grid(weight ~ metric,
+        ggplot2::facet_grid(~ metric,
                             scales = "free_y", space = "free_y") +
         ggplot2::coord_flip() +
-        ggplot2::theme(axis.title = ggplot2::element_blank()) +
+        ggplot2::theme(axis.title = ggplot2::element_blank(),
+                       legend.position = "none") +
         ggsci::scale_fill_igv() +
         title_plot
     )
