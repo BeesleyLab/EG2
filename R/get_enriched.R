@@ -52,17 +52,17 @@ get_enriched <- function(variants,
 
   if (!is.null(tissue_of_interest)) {
 
-    cat("Treating user-provided tissue of interest '", tissue_of_interest, "' as the enriched tissue.\n")
+    cat("Treating user-provided tissue(s) of interest ", paste(tissue_of_interest, collapse = " + "), " as the enriched tissue(s).\n")
     # user-provided tissue
     enriched[["celltypes"]] <- metadata %>%
-      dplyr::filter(tissue == tissue_of_interest)
+      dplyr::filter(tissue %in% tissue_of_interest)
 
   } else if (!is.null(celltype_of_interest)) {
 
-    cat("Treating user-provided celltype of interest '", celltype_of_interest, "' as the enriched celltype.\n")
+    cat("Treating user-provided celltype(s) of interest ", paste(celltype_of_interest, collapse = " +"), " as the enriched celltype(s).\n")
     # user-provided celltype
     enriched[["celltypes"]] <- metadata %>%
-      dplyr::filter(celltype == celltype_of_interest)
+      dplyr::filter(celltype%in% celltype_of_interest)
 
   } else if (celltypes %in% c("every_tissue", "all_celltypes")) {
       

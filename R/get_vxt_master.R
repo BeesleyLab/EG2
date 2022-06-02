@@ -22,7 +22,8 @@ get_vxt_master <- function(variants,
                      cs,
                      enst = enst.TSS,
                      symbol = symbol.TSS,
-                     ensg = ensg.TSS) %>%
+                     ensg = ensg.TSS,
+                     protein_coding = ensg %in% pcENSGs) %>%
     dplyr::distinct()
   return(vxt_master)
 }

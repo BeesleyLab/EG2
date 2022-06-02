@@ -45,7 +45,7 @@ predict_target_genes <- function(trait = NULL,
   args["H3K27ac"] <- list(NULL)
 
   # for testing internally:
-  # setwd("/working/lab_jonathb/alexandT/EG2") ; trait="BC_Michailidou2017_FM" ; celltypes = "all_celltypes" ; variants_file=paste0("/working/lab_jonathb/alexandT/tgp_paper/wrangle_package_data/traits/output/",trait,"/variants.bed") ; known_genes_file = paste0("/working/lab_jonathb/alexandT/tgp_paper/wrangle_package_data/traits/output/",trait,"/known_genes.txt") ; reference_panels_dir = "/working/lab_jonathb/alexandT/tgp_paper/wrangle_package_data/reference_panels/output/" ; weights_file = NULL ; max_variant_to_gene_distance = 2e6 ; max_n_known_genes_per_CS = Inf ; HiChIP = NULL ; H3K27ac = NULL ; celltype_of_interest = NULL ; tissue_of_interest = NULL ; out_dir = NULL ; sub_dir = NULL ; do_scoring = T ; do_performance = T ; do_XGBoost = T ; do_timestamp = F  ; library(devtools) ; load_all()
+  # setwd("/working/lab_jonathb/alexandT/EG2") ; trait="BC_Michailidou2017_FM" ; celltypes = "enriched_celltypes" ; variants_file=paste0("/working/lab_jonathb/alexandT/tgp_paper/wrangle_package_data/traits/output/",trait,"/variants.bed") ; known_genes_file = paste0("/working/lab_jonathb/alexandT/tgp_paper/wrangle_package_data/traits/output/",trait,"/known_genes.txt") ; reference_panels_dir = "/working/lab_jonathb/alexandT/tgp_paper/wrangle_package_data/reference_panels/output/" ; weights_file = NULL ; max_variant_to_gene_distance = 2e6 ; max_n_known_genes_per_CS = Inf ; HiChIP = NULL ; H3K27ac = NULL ; celltype_of_interest = NULL ; tissue_of_interest = NULL ; out_dir = NULL ; sub_dir = NULL ; do_scoring = T ; do_performance = T ; do_XGBoost = T ; do_timestamp = F  ; library(devtools) ; load_all()
   # for internally restoring a previous run environment:
   # args <- dget("out/SC3_Chahal2016andSarin2020_LD/SKIN_tissue/arguments_for_predict_target_genes.R") ; list2env(args, envir=.GlobalEnv) ; library(devtools) ; load_all()
 
@@ -67,8 +67,8 @@ predict_target_genes <- function(trait = NULL,
 
   # define the output files
   enriched_dir <- {
-    if (!is.null(celltype_of_interest)) paste0(celltype_of_interest, "_celltype")
-    else if (!is.null(tissue_of_interest)) paste0(tissue_of_interest, "_tissue")
+    if (!is.null(celltype_of_interest)) paste0(paste(celltype_of_interest, collapse = "+"), "_celltype")
+    else if (!is.null(tissue_of_interest)) paste0(paste(tissue_of_interest, collapse = "+"), "_tissue")
     else paste0(celltypes)
   }
   out <- list(
@@ -119,9 +119,9 @@ predict_target_genes <- function(trait = NULL,
     HiChIP <- readRDS(paste0(reference_panels_dir, "HiChIP.rds"))
   }
 
-  # import the H3K27ac-x-DHS binning data
+  # import the H3K27ac-x-DHS data
   if (is.null(H3K27ac)) {
-    cat("  > Importing H3K27ac-x-DHS binning data...\n")
+    cat("  > Importing H3K27ac-x-DHS data...\n")
     H3K27ac <- readRDS(paste0(reference_panels_dir, "H3K27ac.rds"))
   }
   H3K27ac_specificity_ranked <- readRDS(paste0(reference_panels_dir, "H3K27ac_specificity_rank.rds"))
@@ -167,52 +167,24 @@ predict_target_genes <- function(trait = NULL,
 
   # 3) ANNOTATING ======================================================================================================
   cat("3) Annotating variant-transcript pairs at every level...\n")
-  levels <- list()
-  
+
   cat("  > C\tAnnotating credible sets...\n")
-  levels$c <- get_c_level_annotations(
+  c <- get_c_level_annotations(
     variants)
 
   cat("  > VxT\tAnnotating variant x transcript pairs...\n")
-  levels$vxt <- get_vxt_level_annotations(
+  vxt <- get_vxt_level_annotations(
     variants,
     DHSs,
     vxt_master,
     enriched)
 
   cat("  > VxG\tAnnotating variant x gene pairs...\n")
-  levels$vxg <- get_vxg_level_annotations(
+  vxg <- get_vxg_level_annotations(
     variants,
     vxt_master,
     enriched)
-  
-  # culled levels: #
-  # cat("  > V\tAnnotating variants...\n")
-  # levels$v <- get_v_level_annotations(
-  #   variants,
-  #   H3K27ac,
-  #   enriched,
-  #   vxt_master,
-  #   DHSs)
-  # cat("  > T\tAnnotating transcripts...\n")
-  # levels$t <- get_t_level_annotations(
-  #   TSSs,
-  #   DHSs,
-  #   enriched)
-  # cat("  > G\tAnnotating genes...\n")
-  # levels$g <- get_g_level_annotations(
-  #   vxt_master,
-  #   enriched)
-  # cat("  > CxT\tAnnotating credible set x transcript pairs...\n")
-  # levels$cxt <- get_cxt_level_annotations(
-  #   enriched,
-  #   vxt,
-  #   variants)
-  # 
-  # cat("  > CxG\tAnnotating credible set x gene pairs...\n")
-  # levels$cxg <- get_cxg_level_annotations(
-  #   vxt_master)
-  
+ 
 
   # 4) ALL ANNOTATIONS ======================================================================================================
   # Master list of variant-x-transcript annotations
@@ -220,76 +192,51 @@ predict_target_genes <- function(trait = NULL,
   # -> only variant-transcript combinations within 2Mb are included
   # -> rows match vxt_master
   cat("4) Generating master table of transcript x", trait, "variant pairs, with all annotation levels...\n")
-  master <- levels %>% purrr::map(~ matricise_by_pair(., vxt_master))
+  master <- c(c, vxt, vxg) %>% purrr::map(~ matricise_by_pair(., vxt_master))
   
   # 5) SCORING ======================================================================================================
   cat("5) Scoring variant-gene pairs...\n")
 
-  # raw annotations, summarised by mean
-  if(celltypes == "every_tissue"){
-    # summarise annotations in each tissue
-    raw <- metadata$tissue %>% unique %>%
-      sapply(function(tissue){
-        master %>% names %>%
-          sapply(function(annotation){
-            cols <- colnames(master[[annotation]])
-            return(master[[annotation]][,greplany(c("value", tissue), cols), drop = F] %>% rowMeans)
-          }, USE.NAMES = T, simplify = T)
-      }, USE.NAMES = T, simplify = F)
-  } else {
-    # summarise annotations across all celltypes
-    raw <- list(ALL = master %>% sapply(rowMeans))
-  }
-  
-  # get weights
-  weights <- get_weights(weights_file,
-                         master)
-  
-  # generate output tables
-  tables <- raw %>% names %>%
-    sapply(function(tissue){ print(tissue)
-      tbls <- list()
-      # weight
-      weighted <- raw[[tissue]] * weights[,1][match(colnames(raw[[tissue]]), rownames(weights))][col(raw[[tissue]])]
-      # all raw vxt annotations + scores (raw %>% weight %>% mean -> score)
-      tbls$annotations <- cbind(
-        vxt_master %>% dplyr::select(cs, variant, symbol, ensg, enst),
-        score = rowMeans(weighted),
-        raw[[tissue]]
-        ) %>%
-        dplyr::as_tibble() %>%
-        dplyr::arrange(-score)
-      # max score per vxg (and benchmarks)
-      tbls$predictions_full <- tbls$annotations %>%
-        dplyr::select(cs:ensg, score, vxt_exon_or_inv_distance) %>%
-        dplyr::group_by(cs, variant, symbol, ensg) %>%
-        dplyr::summarise(dplyr::across(where(is.numeric), max)) %>%
-        dplyr::rename(vxg_exon_or_inv_distance = vxt_exon_or_inv_distance)
-      # max score per cs
-      tbls$predictions_max <- tbls$predictions_full %>%
-        dplyr::group_by(variant) %>%
-        dplyr::mutate(vxg_exon_or_closest = vxg_exon_or_inv_distance == max(vxg_exon_or_inv_distance),
-                      vxg_exon_or_inv_distance = NULL) %>%
-        dplyr::group_by(cs) %>%
-        dplyr::filter(score == max(score) & score > 0)
-      # max protein-coding gene per cs
-      tbls$predictions_max_pc <- tbls$predictions_full %>%
-        dplyr::filter(ensg %in% pcENSGs) %>%
-        dplyr::group_by(variant) %>%
-        dplyr::mutate(vxg_exon_or_closest = vxg_exon_or_inv_distance == max(vxg_exon_or_inv_distance),
-                      vxg_exon_or_inv_distance = NULL) %>%
-        dplyr::group_by(cs) %>%
-        dplyr::filter(score == max(score) & score > 0)
-      # write output tables
-      tissue_dir <- paste0(out$base, tissue, "_tissue/") 
-      dir.create(tissue_dir)
-      tbls %>% names %>%
-        sapply(function(tbl){
-          write_tibble(tbls[[tbl]], filename = paste0(tissue_dir, tbl, ".tsv"))
-            })
-      # return
-      return(tbls)
+  # split annotations into tissues
+  tissue_annotations <- enriched$celltypes$tissue %>% unique %>%
+    sapply(function(tissue){
+      master %>% names %>%
+        sapply(function(annotation){
+          cols <- colnames(master[[annotation]])
+          master[[annotation]][,cols[greplany(c(tissue, "value"), cols)], drop = F] %>% rowMeans
+        }, USE.NAMES = T, simplify = T)
     }, USE.NAMES = T, simplify = F)
+  
+  # calculate tissue-level pair scores
+  weights <- get_weights(weights_file, master)
+  tissue_scores <- tissue_annotations %>% names %>%
+    sapply(function(tissue){
+      tissue_annotations[[tissue]] %>%
+      {rowMeans(. * weights[,1][match(colnames(.), rownames(weights))][col(.)])}
+    }, USE.NAMES = T, simplify = T)
+  colnames(tissue_scores) <- paste0(colnames(tissue_scores), "_score")
+  
+  # calculate pair scores
+  scores <- cbind(
+    vxt_master %>% dplyr::select(cs, variant, symbol, ensg, enst, protein_coding),
+    score = rowMeans(tissue_scores),
+    tissue_scores,
+    vxt_exon_or_inv_distance_score = master$vxt_exon_or_inv_distance[,"value"]
+  ) %>%
+    dplyr::as_tibble() %>%
+    dplyr::arrange(-score) %>%
+    # max score per vxg
+    dplyr::group_by(cs, variant, symbol, ensg) %>%
+    dplyr::mutate(dplyr::across(where(is.numeric), 
+                                ~ max(.x), .names = "{.col}_vxg")) %>%
+    # max score per CS
+    dplyr::group_by(cs) %>%
+    dplyr::mutate(dplyr::across(dplyr::ends_with("_vxg"), 
+                                ~ as.numeric(.x == max(.x) & .x > 0), .names = "{.col}_max")) 
+  
+  saveRDS(tissue_annotations, out$annotations.rds)
+  write_tibble(predictions, filenames = paste0(out$base, "scores.tsv"))
+  
 
   # saveRDS(annotations, out$annotations.rds)
   # write_tibble(annotations, filename = out$annotations)
@@ -462,4 +409,35 @@ predict_target_genes <- function(trait = NULL,
   # 8) SAVE ===
   return(annotations)
 }
+
+
+
+
+# culled levels: #
+# cat("  > V\tAnnotating variants...\n")
+# levels$v <- get_v_level_annotations(
+#   variants,
+#   H3K27ac,
+#   enriched,
+#   vxt_master,
+#   DHSs)
+# cat("  > T\tAnnotating transcripts...\n")
+# levels$t <- get_t_level_annotations(
+#   TSSs,
+#   DHSs,
+#   enriched)
+# cat("  > G\tAnnotating genes...\n")
+# levels$g <- get_g_level_annotations(
+#   vxt_master,
+#   enriched)
+# cat("  > CxT\tAnnotating credible set x transcript pairs...\n")
+# levels$cxt <- get_cxt_level_annotations(
+#   enriched,
+#   vxt,
+#   variants)
+# 
+# cat("  > CxG\tAnnotating credible set x gene pairs...\n")
+# levels$cxg <- get_cxg_level_annotations(
+#   vxt_master)
+
 
