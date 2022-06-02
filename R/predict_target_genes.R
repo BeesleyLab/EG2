@@ -168,10 +168,6 @@ predict_target_genes <- function(trait = NULL,
   # 3) ANNOTATING ======================================================================================================
   cat("3) Annotating variant-transcript pairs at every level...\n")
 
-  cat("  > C\tAnnotating credible sets...\n")
-  c <- get_c_level_annotations(
-    variants)
-
   cat("  > VxT\tAnnotating variant x transcript pairs...\n")
   vxt <- get_vxt_level_annotations(
     variants,
@@ -185,14 +181,13 @@ predict_target_genes <- function(trait = NULL,
     vxt_master,
     enriched)
  
-
   # 4) ALL ANNOTATIONS ======================================================================================================
   # Master list of variant-x-transcript annotations
   # -> wide-format (one row per vxt pair, one column per celltype if ct-specific)
   # -> only variant-transcript combinations within 2Mb are included
   # -> rows match vxt_master
   cat("4) Generating master table of transcript x", trait, "variant pairs, with all annotation levels...\n")
-  master <- c(c, vxt, vxg) %>% purrr::map(~ matricise_by_pair(., vxt_master))
+  master <- c(vxt, vxg) %>% purrr::map(~ matricise_by_pair(., vxt_master))
   
   # 5) SCORING ======================================================================================================
   cat("5) Scoring variant-gene pairs...\n")
@@ -421,6 +416,9 @@ predict_target_genes <- function(trait = NULL,
 
 
 # culled levels: #
+# cat("  > C\tAnnotating credible sets...\n")
+# c <- get_c_level_annotations(
+#   variants)
 # cat("  > V\tAnnotating variants...\n")
 # levels$v <- get_v_level_annotations(
 #   variants,

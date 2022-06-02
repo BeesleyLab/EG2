@@ -14,21 +14,6 @@ get_vxt_level_annotations <- function(variants,
                   # ranking transcript TSSs (if two transcript TSSs are equidistant to the variant, they will receive the same, lower rank)
                   inv_distance_rank = 1 / rank(distance, ties.method = "min"))
 
-  # variant-TSS inverse distance score method
-  vxt$inv_distance <- distance %>%
-    dplyr::transmute(cs, variant, enst,
-                     value = inv_distance)
-
-  # variant-TSS distance rank method
-  vxt$inv_distance_rank <- distance %>%
-    dplyr::transmute(cs, variant, enst,
-                     value = inv_distance_rank)
-
-  # closest variant-TSS method
-  vxt$closest <- distance %>%
-    dplyr::filter(inv_distance_rank == 1) %>%
-    dplyr::transmute(cs, variant, enst)
-
   # intersect loop ends, by cell type, with enhancer variants and gene TSSs
   # (finds interaction loops with a variant at one end and a TSS at the other)
   vxt$HiChIP_scores <- enriched$HiChIP %>% names %>%
@@ -49,10 +34,6 @@ get_vxt_level_annotations <- function(variants,
         tidyr::pivot_wider(id_cols = c(cs, variant, enst),
                            names_from = celltype,
                            values_from = value)
-
-  # HiChIP binary
-  vxt$HiChIP_binary <- vxt$HiChIP_scores %>%
-    dplyr::mutate(., dplyr::across(where(is.numeric), ~ dplyr::case_when(is.na(.) ~ 0, TRUE ~ 1)))
 
   # get variants at promoters
   vxt$promoter <- variants %>%
@@ -82,16 +63,13 @@ get_vxt_level_annotations <- function(variants,
     dplyr::summarise(dplyr::across(where(is.numeric), sum)) %>%
     dplyr::ungroup()
 
-  # intronic variants
-  vxt$intron <- variants %>%
-    # Get variants within introns
-    bed_intersect_left(
-      introns, .,
-      keepBcoords = F, keepBmetadata = T) %>%
-    dplyr::transmute(cs, variant, enst)
-
+  # variant-TSS inverse distance score method
+  inv_distance <- distance %>%
+    dplyr::transmute(cs, variant, enst,
+                     value = inv_distance)
+  
   # exonic (coding) variants
-  vxt$exon <- variants %>%
+  exon <- variants %>%
     # Get variants within exons
     bed_intersect_left(
       exons, .,
@@ -99,17 +77,12 @@ get_vxt_level_annotations <- function(variants,
     dplyr::transmute(cs, variant, enst)
 
   # exonic or inv distance
-  vxt$exon_or_inv_distance <- dplyr::full_join(vxt$inv_distance, vxt$exon %>% dplyr::mutate(exon = T),
+  vxt$exon_or_inv_distance <- dplyr::full_join(inv_distance, exon %>% dplyr::mutate(exon = T),
                                                by = c("cs", "variant", "enst")) %>%
     dplyr::transmute(cs, variant, enst,
                      value = dplyr::case_when(exon ~ 1,
                                            TRUE ~ value))
   
-  # exonic or inv distance rank
-  vxt$exon_or_inv_distance_rank <- vxt$exon_or_inv_distance %>%
-    dplyr::group_by(cs, variant) %>%
-    dplyr::mutate(value = 1 / rank(-value, ties.method = "min"))
-
   # TADs
   TADs_w_ID <- enriched$TADs %>%
     dplyr::bind_rows(.id = "celltype") %>%
@@ -130,10 +103,45 @@ get_vxt_level_annotations <- function(variants,
                        names_from = celltype,
                        values_from = value)
 
-  # # sum of best vxt features
-  # vxt$exon_or_inv_distance_plus_HiChIP_plus_TADs
-
   # return
   names(vxt) <- paste0("vxt_", names(vxt))
   return(vxt)
 }
+
+# culled annotations: #
+# # variant-TSS inverse distance score method
+# vxt$inv_distance <- distance %>%
+#   dplyr::transmute(cs, variant, enst,
+#                    value = inv_distance)
+# 
+# # exonic (coding) variants
+# vxt$exon <- variants %>%
+#   # Get variants within exons
+#   bed_intersect_left(
+#     exons, .,
+#     keepBcoords = F, keepBmetadata = T) %>%
+#   dplyr::transmute(cs, variant, enst)
+# # intronic variants
+# vxt$intron <- variants %>%
+#   # Get variants within introns
+#   bed_intersect_left(
+#     introns, .,
+#     keepBcoords = F, keepBmetadata = T) %>%
+#   dplyr::transmute(cs, variant, enst)
+# # variant-TSS distance rank method
+# vxt$inv_distance_rank <- distance %>%
+#   dplyr::transmute(cs, variant, enst,
+#                    value = inv_distance_rank)
+# # closest variant-TSS method
+# vxt$closest <- distance %>%
+#   dplyr::filter(inv_distance_rank == 1) %>%
+#   dplyr::transmute(cs, variant, enst)
+# # HiChIP binary
+# vxt$HiChIP_binary <- vxt$HiChIP_scores %>%
+#   dplyr::mutate(., dplyr::across(where(is.numeric), ~ dplyr::case_when(is.na(.) ~ 0, TRUE ~ 1)))
+# # exonic or inv distance rank
+# vxt$exon_or_inv_distance_rank <- vxt$exon_or_inv_distance %>%
+#   dplyr::group_by(cs, variant) %>%
+#   dplyr::mutate(value = 1 / rank(-value, ties.method = "min"))
+# # sum of best vxt features
+# vxt$exon_or_inv_distance_plus_HiChIP_plus_TADs

@@ -4,31 +4,6 @@ get_vxg_level_annotations <- function(variants,
 
   vxg <- list()
 
-  # variant-gene distance
-  # (between the variant and all of the gene's transcripts' TSSs)
-  distance <- vxt_master %>%
-    dplyr::group_by(cs, variant, symbol) %>%
-    dplyr::summarise(distance = min(distance)) %>%
-    dplyr::group_by(variant) %>%
-    dplyr::transmute(cs, variant, symbol,
-                     inv_distance = dplyr::case_when(distance == 0 ~ 1,
-                                                     TRUE ~ 1 / distance),
-                     inv_distance_rank = 1 / rank(distance, ties.method = "min")) %>%
-    dplyr::ungroup() %>%
-    dplyr::distinct()
-
-  vxg$closest <- distance %>%
-    dplyr::filter(inv_distance_rank == 1) %>%
-    dplyr::transmute(cs, variant, symbol)
-
-  vxg$inv_distance <- distance %>%
-    dplyr::transmute(cs, variant, symbol,
-                     value = inv_distance)
-
-  vxg$inv_distance_rank <- distance %>%
-    dplyr::transmute(cs, variant, symbol,
-                     value = inv_distance_rank)
-
   # coding_mutations #
   intersect_coding_mutations <- function(variants, coding_mutations_df, ...){
     variants %>%
@@ -51,3 +26,26 @@ get_vxg_level_annotations <- function(variants,
   names(vxg) <- paste0("vxg_", names(vxg))
   return(vxg)
 }
+
+# culled annotations: #
+# # variant-gene distance
+# # (between the variant and all of the gene's transcripts' TSSs)
+# distance <- vxt_master %>%
+#   dplyr::group_by(cs, variant, symbol) %>%
+#   dplyr::summarise(distance = min(distance)) %>%
+#   dplyr::group_by(variant) %>%
+#   dplyr::transmute(cs, variant, symbol,
+#                    inv_distance = dplyr::case_when(distance == 0 ~ 1,
+#                                                    TRUE ~ 1 / distance),
+#                    inv_distance_rank = 1 / rank(distance, ties.method = "min")) %>%
+#   dplyr::ungroup() %>%
+#   dplyr::distinct()
+# vxg$closest <- distance %>%
+#   dplyr::filter(inv_distance_rank == 1) %>%
+#   dplyr::transmute(cs, variant, symbol)
+# vxg$inv_distance <- distance %>%
+#   dplyr::transmute(cs, variant, symbol,
+#                    value = inv_distance)
+# vxg$inv_distance_rank <- distance %>%
+#   dplyr::transmute(cs, variant, symbol,
+#                    value = inv_distance_rank)
