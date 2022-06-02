@@ -259,134 +259,119 @@ predict_target_genes <- function(trait = NULL,
   known_genes <- read_tibble(known_genes_file)$V1 %>%
     check_known_genes(known_genes_file)
 
-  # Generate PR curves (model performance metric) (only testing protein-coding genes)
+  # run performance tests on all annotations
   performance <- tissue_annotations %>%
-    purrr::map(~ 
-      # get performance
-      get_PR(., vxt_master, known_genes, pcENSGs, max_n_known_genes_per_CS)
-    )
-  # performance %>% names %>%
-  #   sapply(function(tissue){
-  #     
-  #   })
-  
-  # # plot extras
-  # weight_facets <- dplyr::tibble(prediction_method = unique(performance$summary$prediction_method)) %>%
-  #   dplyr::full_join(weights %>% dplyr::as_tibble(rownames = "prediction_method"),
-  #                    by = "prediction_method") %>%
-  #   dplyr::mutate(
-  #     weight = factor(dplyr::case_when(
-  #       grepl("^score", prediction_method) ~ "score",
-  #       TRUE ~ as.character(weight)),
-  #       levels = c("score",
-  #                  weights[,"weight"] %>% unique %>% sort(T) %>% as.character)))
-
-  # title_plot <- list(ggplot2::labs(
-  #   title = paste0(
-  #     "\nTrait = ", trait,
-  #     "\nmax n known genes per CS = ", max_n_known_genes_per_CS,
-  #     "; max distance = ", max_variant_to_gene_distance,
-  #     "\nCell types = ", celltypes_dir
-  #   ),
-  #   subtitle = paste0(
-  #     "Tissue(s) = ", annotations$selected_celltypes$tissue %>% unique %>% paste(collapse = ", "),
-  #     "\n",
-  #     paste(strwrap(
-  #       paste0(
-  #         "Cell type(s) = ", if(celltypes == "all_celltypes"){"all cell types"}
-  #         else{annotations$selected_celltypes$celltype %>% unique %>% paste(collapse = ", ")}
-  #       ),
-  #       width = 70
-  #     ), collapse = "\n")
-  #   )
-  # ))
-
-  {pdf(out$performance_plot, height = 10, width = 15, onefile = T)
-
-    # PR score + max
-    performance %>%
-      purrr::map(~ .x %>% print(plot_PR(., colour = prediction_method) + title_plot))
-    
-
-    # PR score + max facets
-    print(
-      performance %>%
-        purrr::map(.f = function(tissue){
-          t.summary <- tissue$summary
-          tissue %>%
-            purrr::map(~ .x %>%
-                         dplyr::mutate(
-                           prediction_method = factor(
-                             prediction_method,
-                             levels = dplyr::arrange(t.summary, desc(score_PR_AUC))$prediction_method))) %>%
-                     plot_PR() +
-                     ggplot2::facet_wrap(. ~ prediction_method) +
-                     ggplot2::geom_text(data = t.summary %>%
-                                          dplyr::transmute(prediction_method,
-                                                           label = round(score_PR_AUC, 3)),
-                                        mapping = ggplot2::aes(x = -Inf, y = Inf, label = label),
-                                        hjust = 0, vjust = 1, size = 5) +
-                     ggplot2::theme_bw() +
-                     ggplot2::theme(axis.ticks = ggplot2::element_blank(),
-                                    axis.text = ggplot2::element_blank())
-        })
-    )
+    purrr::imap(function(x, y){
+      performance <- get_performance(x, vxt_master, known_genes, pcENSGs, max_n_known_genes_per_CS)
       
-    
-
-    # PR max
-    print(
-      performance %>%
-        purrr::map(.f = function(tissue){
-          tissue %>% purrr::map(dplyr::filter, prediction_type == "max") %>%
+      title_plot <- list(ggplot2::labs(
+        title = paste0(
+          "\nTrait = ", trait,
+          "\nmax n known genes per CS = ", max_n_known_genes_per_CS,
+          "; max distance = ", max_variant_to_gene_distance,
+          "\nCell types = ", celltypes_dir
+        ),
+        subtitle = paste0(
+          "Tissue(s) = ", y,
+          "\n",
+          paste(strwrap(
+            paste0(
+              "Cell type(s) = ", if(celltypes == "all_celltypes"){"all cell types"}
+              else{dplyr::filter(metadata, tissue == y)$celltype %>% unique %>% paste(collapse = ", ")}
+            ),
+            width = 70
+          ), collapse = "\n")
+        )
+      ))
+      
+      
+      
+      # plot extras
+      weight_facets <- dplyr::tibble(prediction_method = unique(performance$summary$prediction_method)) %>%
+        dplyr::full_join(weights %>% dplyr::as_tibble(rownames = "prediction_method"),
+                         by = "prediction_method") %>%
+        dplyr::mutate(
+          weight = factor(dplyr::case_when(
+            grepl("^score", prediction_method) ~ "score",
+            TRUE ~ as.character(weight)),
+            levels = c("score",
+                       weights[,"weight"] %>% unique %>% sort(T) %>% as.character)))
+      
+      {pdf(out$performance_plot, height = 10, width = 15, onefile = T)
+        
+        # PR score + max
+        print(
+          performance %>% plot_PR(, colour = prediction_method) + title_plot
+        )
+        
+        # PR score + max facets
+        print(
+          performance %>% 
+                  plot_PR() +
+                  ggplot2::facet_wrap(. ~ prediction_method) +
+                  ggplot2::geom_text(data = performance$summary %>%
+                                       dplyr::transmute(prediction_method,
+                                                        label = round(score_PR_AUC, 3)),
+                                     mapping = ggplot2::aes(x = -Inf, y = Inf, label = label),
+                                     hjust = 0, vjust = 1, size = 5) +
+                  ggplot2::theme_bw() +
+                  ggplot2::theme(axis.ticks = ggplot2::element_blank(),
+                                 axis.text = ggplot2::element_blank()) + 
+            title_plot
+        )
+        
+        # PR max
+        print(
+          performance %>% purrr::map(dplyr::filter, prediction_type == "max") %>%
             plot_PR(colour = prediction_method) +
-            ggrepel::geom_text_repel(min.segment.length = 0, max.overlaps = Inf) +
-            title_plot
-        })
-    )
-
-    # F score max
-    print(
-      performance%>%
-        purrr::map(.f = function(tissue){ 
-          tissue$summary%>%
-            dplyr::mutate(F_score = F_score %>% tidyr::replace_na(0)) %>%
-            dplyr::distinct() %>%
-            ggplot2::ggplot(ggplot2::aes(x = reorder(prediction_method, F_score),
-                                         y = F_score)) +
+                ggrepel::geom_text_repel(min.segment.length = 0, max.overlaps = Inf) +
+                title_plot
+        )
+        
+        # F score max
+        print(
+          performance$summary %>%
+              dplyr::mutate(F_score = F_score %>% tidyr::replace_na(0)) %>%
+              dplyr::distinct() %>%
+              ggplot2::ggplot(ggplot2::aes(x = reorder(prediction_method, F_score),
+                                           y = F_score)) +
+              ggplot2::geom_col() +
+              ggplot2::labs(x = "Predictor",
+                            y = "F score") +
+              ggsci::scale_fill_igv() +
+              ggplot2::coord_flip() +
+              title_plot
+        )
+        
+        # performance metrics
+        print(
+          performance$summary %>%
+            dplyr::mutate(dplyr::across(where(is.numeric), tidyr::replace_na, 0),
+                          fsc = F_score) %>%
+            tidyr::pivot_longer(cols = c(F_score, score_PR_AUC, Precision, Recall),
+                                names_to = "metric",
+                                values_to = "performance") %>%
+            ggplot2::ggplot(ggplot2::aes(x = reorder(prediction_method, fsc),
+                                         y = performance,
+                                         fill = prediction_method)) +
             ggplot2::geom_col() +
-            ggplot2::labs(x = "Predictor",
-                          y = "F score") +
-            ggsci::scale_fill_igv() +
+            ggplot2::facet_grid(. ~ metric,
+                                scales = "free", space = "free_y") +
             ggplot2::coord_flip() +
+            ggplot2::theme(axis.title = ggplot2::element_blank(),
+                           legend.position = "none") +
+            ggsci::scale_fill_igv() +
             title_plot
-        })
-    )
-
-    # performance metrics
-    print(
-      performance$summary %>%
-        dplyr::mutate(dplyr::across(where(is.numeric), tidyr::replace_na, 0),
-                      fsc = F_score) %>%
-        tidyr::pivot_longer(cols = c(F_score, score_PR_AUC, Precision, Recall),
-                            names_to = "metric",
-                            values_to = "performance") %>%
-        ggplot2::ggplot(ggplot2::aes(x = reorder(prediction_method, fsc),
-                                     y = performance,
-                                     fill = prediction_method)) +
-        ggplot2::geom_col() +
-        ggplot2::facet_grid(~ metric,
-                            scales = "free_y", space = "free_y") +
-        ggplot2::coord_flip() +
-        ggplot2::theme(axis.title = ggplot2::element_blank(),
-                       legend.position = "none") +
-        ggsci::scale_fill_igv() +
-        title_plot
-    )
-  dev.off()}
-
+        )
+        
+        dev.off()}
+      
+      return(performance)
+      
+    })
   # write table
-  write_tibble(performance$summary, filename = out$performance)
+  saveRDS(performance, filename = paste0(out$base, "performance.rds"))
+ 
   }
 
   # 7) XGBoost MODEL TRAINING ======================================================================================================

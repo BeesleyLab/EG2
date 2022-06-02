@@ -98,8 +98,12 @@ get_performance <- function(annotations, vxt_master, known_genes, pcENSGs, max_n
         performance$summary %>%
           dplyr::arrange(desc(F_score)) %>%
           dplyr::select(prediction_method),
-        .x)
+        .x) %>%
+        dplyr::mutate(
+          prediction_method = factor(prediction_method,
+                                     levels = dplyr::arrange(performance$summary, desc(score_PR_AUC))$prediction_method))
     )
+  
 
   return(performance)
 
