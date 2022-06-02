@@ -2,6 +2,7 @@ get_tissue_enrichment <- function(variants,
                                   DHSs,
                                   H3K27ac_specificity_ranked,
                                   metadata,
+                                  out,
                                   ratio_cutoff = 1,
                                   p_value_cutoff = 0.05){
   # for testing: # ratio_cutoff = 1 ; p_value_cutoff = 0.05

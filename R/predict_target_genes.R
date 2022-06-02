@@ -140,11 +140,12 @@ predict_target_genes <- function(trait = NULL,
   # 1) CELL TYPE ENRICHMENT ======================================================================================================
   cat("1) Performing cell type enrichment...\n")
   enriched <- get_tissue_enrichment(variants,
-                                      DHSs,
-                                      H3K27ac_specificity_ranked,
-                                      metadata,
-                                      ratio_cutoff = 1,
-                                      p_value_cutoff = 0.05)
+                                    DHSs,
+                                    H3K27ac_specificity_ranked,
+                                    metadata,
+                                    out,
+                                    ratio_cutoff = 1,
+                                    p_value_cutoff = 0.05)
   
   # get annotations 
   annotations <- get_annotations(celltypes,
