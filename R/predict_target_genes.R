@@ -45,7 +45,7 @@ predict_target_genes <- function(trait = NULL,
   args["H3K27ac"] <- list(NULL)
 
   # for testing internally:
-  # setwd("/working/lab_jonathb/alexandT/EG2") ; trait="BC_Michailidou2017_FM" ; celltypes = "all_celltypes" ; variants_file=paste0("/working/lab_jonathb/alexandT/tgp_paper/wrangle_package_data/traits/output/",trait,"/variants.bed") ; known_genes_file = paste0("/working/lab_jonathb/alexandT/tgp_paper/wrangle_package_data/traits/output/",trait,"/known_genes.txt") ; reference_panels_dir = "/working/lab_jonathb/alexandT/tgp_paper/wrangle_package_data/reference_panels/output/" ; weights_file = NULL ; max_variant_to_gene_distance = 2e6 ; max_n_known_genes_per_CS = Inf ; HiChIP = NULL ; H3K27ac = NULL ; celltype_of_interest = NULL ; tissue_of_interest = NULL ; out_dir = NULL ; sub_dir = NULL ; do_scoring = T ; do_performance = T ; do_XGBoost = T ; do_timestamp = F  ; library(devtools) ; load_all()
+  # setwd("/working/lab_jonathb/alexandT/EG2") ; trait="BC_Michailidou2017_FM" ; celltypes = "enriched_celltypes" ; variants_file=paste0("/working/lab_jonathb/alexandT/tgp_paper/wrangle_package_data/traits/output/",trait,"/variants.bed") ; known_genes_file = paste0("/working/lab_jonathb/alexandT/tgp_paper/wrangle_package_data/traits/output/",trait,"/known_genes.txt") ; reference_panels_dir = "/working/lab_jonathb/alexandT/tgp_paper/wrangle_package_data/reference_panels/output/" ; weights_file = NULL ; max_variant_to_gene_distance = 2e6 ; max_n_known_genes_per_CS = Inf ; HiChIP = NULL ; H3K27ac = NULL ; celltype_of_interest = NULL ; tissue_of_interest = NULL ; out_dir = NULL ; sub_dir = NULL ; do_scoring = T ; do_performance = T ; do_XGBoost = T ; do_timestamp = F  ; library(devtools) ; load_all()
   # for internally restoring a previous run environment:
   # args <- dget("out/SC3_Chahal2016andSarin2020_LD/SKIN_tissue/arguments_for_predict_target_genes.R") ; list2env(args, envir=.GlobalEnv) ; library(devtools) ; load_all()
 
@@ -193,7 +193,8 @@ predict_target_genes <- function(trait = NULL,
   cat("5) Scoring variant-gene pairs...\n")
 
   # get weights
-  weights <- get_weights(weights_file, master)
+  # weights_file <- list.files("inst/example_data/", pattern = "weights.tsv", full.names = T)
+  weights <- get_weights(weights_file, master)}
   
   # split annotations into tissues
   tissue_annotations <- enriched$celltypes$tissue %>% unique %>%
@@ -205,12 +206,12 @@ predict_target_genes <- function(trait = NULL,
         }, USE.NAMES = T, simplify = T)
     }, USE.NAMES = T, simplify = F)
   
-  # calculate tissue-level pair scores
+  # weight and score tissue-level pairs
   tissue_scores <- tissue_annotations %>% names %>%
-    sapply(function(tissue){
-      tissue_annotations[[tissue]] %>%
-      {rowMeans(. * weights[,1][match(colnames(.), rownames(weights))][col(.)])}
-    }, USE.NAMES = T, simplify = T)
+      sapply(function(tissue){
+        tissue_annotations[[tissue]] %>%
+        {rowMeans(. * weights[[w]][,1][match(colnames(.), rownames(weights[[w]]))][col(.)])}
+      }, USE.NAMES = T, simplify = T)
   colnames(tissue_scores) <- paste0(colnames(tissue_scores), "_score")
   
   # calculate pair scores
@@ -257,16 +258,16 @@ predict_target_genes <- function(trait = NULL,
     # get performance
     get_PR(vxt_master, known_genes, pcENSGs, max_n_known_genes_per_CS)
 
-  # plot extras
-  weight_facets <- dplyr::tibble(prediction_method = unique(performance$summary$prediction_method)) %>%
-    dplyr::full_join(weights %>% dplyr::as_tibble(rownames = "prediction_method"),
-                     by = "prediction_method") %>%
-    dplyr::mutate(
-      weight = factor(dplyr::case_when(
-        grepl("^score", prediction_method) ~ "score",
-        TRUE ~ as.character(weight)),
-        levels = c("score",
-                   weights[,"weight"] %>% unique %>% sort(T) %>% as.character)))
+  # # plot extras
+  # weight_facets <- dplyr::tibble(prediction_method = unique(performance$summary$prediction_method)) %>%
+  #   dplyr::full_join(weights %>% dplyr::as_tibble(rownames = "prediction_method"),
+  #                    by = "prediction_method") %>%
+  #   dplyr::mutate(
+  #     weight = factor(dplyr::case_when(
+  #       grepl("^score", prediction_method) ~ "score",
+  #       TRUE ~ as.character(weight)),
+  #       levels = c("score",
+  #                  weights[,"weight"] %>% unique %>% sort(T) %>% as.character)))
 
   title_plot <- list(ggplot2::labs(
     title = paste0(
