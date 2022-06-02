@@ -238,7 +238,7 @@ predict_target_genes <- function(trait = NULL,
     dplyr::ungroup()
   
   saveRDS(tissue_annotations, out$annotations.rds)
-  write_tibble(scores, filenames = paste0(out$base, "scores.tsv"))
+  write_tibble(scores, filename = paste0(out$base, "scores.tsv"))
 
   # saveRDS(annotations, out$annotations.rds)
   # write_tibble(annotations, filename = out$annotations)
