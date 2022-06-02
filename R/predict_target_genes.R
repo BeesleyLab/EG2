@@ -371,7 +371,7 @@ predict_target_genes <- function(trait = NULL,
       
     })
   # write table
-  saveRDS(performance, filename = paste0(out$base, "performance.rds"))
+  saveRDS(performance, file = paste0(out$base, "performance.rds"))
  
   }
 
