@@ -119,9 +119,9 @@ predict_target_genes <- function(trait = NULL,
     HiChIP <- readRDS(paste0(reference_panels_dir, "HiChIP.rds"))
   }
 
-  # import the H3K27ac-x-DHS data
+  # import the H3K27ac data
   if (is.null(H3K27ac)) {
-    cat("  > Importing H3K27ac-x-DHS data...\n")
+    cat("  > Importing H3K27ac data...\n")
     H3K27ac <- readRDS(paste0(reference_panels_dir, "H3K27ac.rds"))
   }
   H3K27ac_specificity_ranked <- readRDS(paste0(reference_panels_dir, "H3K27ac_specificity_rank.rds"))
