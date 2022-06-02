@@ -194,7 +194,7 @@ predict_target_genes <- function(trait = NULL,
 
   # get weights
   # weights_file <- list.files("inst/example_data/", pattern = "weights.tsv", full.names = T)
-  weights <- get_weights(weights_file, master)}
+  weights <- get_weights(weights_file, master)
   
   # split annotations into tissues
   tissue_annotations <- enriched$celltypes$tissue %>% unique %>%
