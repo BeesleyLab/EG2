@@ -404,7 +404,7 @@ predict_target_genes <- function(trait = NULL,
 
   cat("\nDONE!\n")
   # 8) SAVE ===
-  return(annotations)
+  return(scores)
 }
 
 
