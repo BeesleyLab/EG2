@@ -14,39 +14,6 @@ get_enriched <- function(variants,
                          ratio_cutoff = 1,
                          p_value_cutoff = 0.05){
 
-  # for testing: # ratio_cutoff = 1 ; p_value_cutoff = 0.05
-
-  cat("Performing enrichment analysis to find enriched celltype(s).\n")
-  # No user-provided tissue, determine via enrichment analysis
-  # Fisher enrichment test
-  # Intersect SNPs with DHS sites and compute the mean H3K27ac specificity rank of the intersected DHS.
-  # Assuming SNPs overlap sites randomly, compute significance of mean rank of sites where SNPs overlap based on deivation from uniform distribution.
-  
-  # intersect DHSs
-  intersected_DHSs <- bed_intersect_left(variants, DHSs, keepBcoords = F) %>%
-  {dplyr::filter(H3K27ac_specificity_ranked, DHS %in% .$DHS)}
-  enrichment <- intersected_DHSs %>%
-    # mean specificity rank per celltype
-    dplyr::summarise(dplyr::across(.cols = where(is.numeric),
-                                   .fns = ~ mean(.x))) %>%
-    tidyr::pivot_longer(everything(), names_to = "celltype", values_to = "obs_mean_rank") %>%
-    dplyr::left_join(metadata %>% dplyr::distinct(celltype, tissue), by = "celltype") %>%
-    dplyr::transmute(
-      celltype,
-      tissue,
-      # uniform distribution parameters
-      N = dplyr::n_distinct(DHSs$DHS),
-      n = dplyr::n_distinct(intersected_DHSs$DHS),
-      unif_mean_rank = (N + 1)/2,
-      unif_variance = sqrt((N^2 - 1)/(12 * n)),
-      # deviation from uniform distribution = enrichment
-      ratio = obs_mean_rank / unif_mean_rank,
-      p_value = pnorm(obs_mean_rank, unif_mean_rank, unif_variance, lower.tail = F),
-      p_value_adjust = p_value %>% p.adjust,
-      pass = ((p_value < p_value_cutoff) & (ratio > ratio_cutoff))) %>%
-    dplyr::arrange(p_value)
-  write_tibble(enrichment, out$tissue_enrichments)
-  cat("Enrichment analysis saved to", out$tissue_enrichments, ".\n")
   
   enriched <- list()
 
@@ -75,36 +42,9 @@ get_enriched <- function(variants,
   } else {
       
     # enriched_tissues / enriched_celltypes
-    enriched[["celltypes"]] <- enrichment %>%
-      # Filter to celltypes that pass filters
-      dplyr::filter(pass)  %>%
-      # Get enriched celltype metadata
-      {dplyr::filter(metadata, celltype %in% .$celltype)} %>%
-      # Get all samples in the enriched tissue, or only the enriched celltype
-      {dplyr::filter(metadata,
-                     (celltypes == "enriched_tissues" & tissue %in% .$tissue ) |
-                       (celltypes == "enriched_celltypes" & celltype %in% .$celltype))}
     
-    # error message if no cell types were enriched
-    if(nrow(enriched$celltypes)==0){
-      stop("No enriched cell types found! Enrichment analysis saved to ", out$tissue_enrichments, ".\n")}
-    if(celltypes == "enriched_tissues"){
-      cat("Enriched tissue(s): ") ; enriched$celltypes$tissue %>% unique %>% paste(collapse = ", ") %>% cat('\n')
-      cat("Celltype(s) in enriched tissue(s): ") ; enriched$celltypes$celltype %>% unique %>% paste(collapse = ", ") %>% cat('\n')
-    } else {
-      cat("Enriched celltype(s): ") ; enriched$celltypes$celltype %>% unique %>% paste(collapse = ", ") %>% cat('\n')
-      
-      full_panel <- metadata$object
-      enriched_panel <- dplyr::filter(metadata, celltype %in% enriched$celltypes$celltype)$object
-      panel_gaps <- setdiff(full_panel, enriched_panel)
-      if(length(panel_gaps) > 0){
-        stop("\nOption `celltypes = enriched_celltypes` was given, but the enriched celltype(s) do not constitute a full reference panel.",
-             "\nEnriched celltype(s): ", enriched$celltypes$celltype  %>% unique %>% paste(collapse = ", "),
-             "\nMissing annotations: ", paste(panel_gaps, collapse = ", "),
-             "\nMake sure the enriched celltype(s) have coverage across all annotations (TADs, HiChIP, expression, H3K27ac) in the metadata table.",
-             "\nEither run again with `celltypes = enriched_tissues` or lower the enrichment threshold `p_value_cutoff = ",p_value_cutoff,"`")
-      }
-    }
+    
+    
   }
 
   # subset annotations

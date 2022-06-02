@@ -1,6 +1,6 @@
 get_t_level_annotations <- function(TSSs,
                                     DHSs,
-                                    enriched){
+                                    annotations){
 
   t <- list()
 
@@ -8,7 +8,7 @@ get_t_level_annotations <- function(TSSs,
   t <- t %>%
     intersect_H3K27ac(query = TSSs %>% dplyr::select(chrom:end, enst),
                       DHSs,
-                      H3K27ac = enriched$H3K27ac,
+                      H3K27ac = annotations$H3K27ac,
                       enst)
 
   # annotate open variants (in DHSs)

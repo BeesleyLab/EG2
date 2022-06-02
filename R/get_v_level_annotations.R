@@ -1,6 +1,6 @@
 get_v_level_annotations <- function(variants,
                                     H3K27ac,
-                                    enriched,
+                                    annotations,
                                     vxt_master,
                                     DHSs){
 
@@ -10,7 +10,7 @@ get_v_level_annotations <- function(variants,
   v <- v %>%
     intersect_H3K27ac(query = variants,
                       DHSs,
-                      H3K27ac = enriched$H3K27ac,
+                      H3K27ac = annotations$H3K27ac,
                       variant)
 
   # annotate open variants (in DHSs)

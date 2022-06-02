@@ -1,7 +1,7 @@
 get_vxt_level_annotations <- function(variants,
                                       DHSs,
                                       vxt_master,
-                                      enriched) {
+                                      annotations) {
 
   vxt <- list()
 
@@ -16,10 +16,10 @@ get_vxt_level_annotations <- function(variants,
 
   # intersect loop ends, by cell type, with enhancer variants and gene TSSs
   # (finds interaction loops with a variant at one end and a TSS at the other)
-  vxt$HiChIP_scores <- enriched$HiChIP %>% names %>%
+  vxt$HiChIP_scores <- annotations$HiChIP %>% names %>%
     sapply(function(celltype){
         # Intersect with the HiChIP data
-        enriched$HiChIP[[celltype]] %>%
+        annotations$HiChIP[[celltype]] %>%
           intersect_BEDPE(
             # ! For mutually exclusive intersection with ranges, make variant intervals 1bp long, equal to the end position
             SNPend = variants %>% dplyr::mutate(start = end),
@@ -55,7 +55,7 @@ get_vxt_level_annotations <- function(variants,
     intersect_H3K27ac(list(),
                    query = .,
                    DHSs,
-                   H3K27ac = enriched$H3K27ac,
+                   H3K27ac = annotations$H3K27ac,
                    cs, variant, enst) %>%
     purrr::reduce(dplyr::bind_rows) %>%
     # Sum specificity + signal bin per promoter variant per cell type
@@ -84,7 +84,7 @@ get_vxt_level_annotations <- function(variants,
                                            TRUE ~ value))
   
   # TADs
-  TADs_w_ID <- enriched$TADs %>%
+  TADs_w_ID <- annotations$TADs %>%
     dplyr::bind_rows(.id = "celltype") %>%
     dplyr::group_by(celltype) %>%
     dplyr::mutate(TAD = paste0(celltype, "_", dplyr::row_number())) %>%

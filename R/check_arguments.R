@@ -27,7 +27,7 @@ check_arguments <- function(metadata,
   if (!is.null(tissue_of_interest)) {
     if (tissue_of_interest %ni% metadata$tissue) {
       stop("Provided tissue_of_interest '", tissue_of_interest, "' is not represented in the available data. Must be one of...\n", paste(unique(metadata$tissue), collapse = ", ")) } }
-  allowed_celltypes <- c("all_celltypes", "enriched_tissues", "enriched_celltypes", "every_tissue")
+  allowed_celltypes <- c("all_celltypes", "enriched_tissues")
   if (celltypes %ni% allowed_celltypes) {
     stop("Provided celltypes argument '", celltypes, "' is not acceptable. Must be one of...\n", paste(allowed_celltypes, collapse = ", ")) }
 

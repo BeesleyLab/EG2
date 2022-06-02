@@ -66,7 +66,7 @@ predict_target_genes <- function(trait = NULL,
                   do_XGBoost)
 
   # define the output files
-  enriched_dir <- {
+  celltypes_dir <- {
     if (!is.null(celltype_of_interest)) paste0(paste(celltype_of_interest, collapse = "+"), "_celltype")
     else if (!is.null(tissue_of_interest)) paste0(paste(tissue_of_interest, collapse = "+"), "_tissue")
     else paste0(celltypes)
@@ -74,20 +74,18 @@ predict_target_genes <- function(trait = NULL,
   out <- list(
     base = "",
     tissue_enrichments = "tissue_enrichments.tsv",
-    annotations.rds = "target_gene_annotations.rds",
-    annotations_pc.rds = "target_gene_annotations_proteincoding.rds",
-    annotations = "target_gene_annotations.tsv",
-    predictions_full = "target_gene_predictions_full.tsv",
-    predictions_max = "target_gene_predictions_max.tsv",
-    predictions_max_pc = "target_gene_predictions_max_proteincoding.tsv",
+    annotations.rds = "annotations.rds",
+    predictions_full = "target_gene_predictions_full.rds",
+    predictions_max = "target_gene_predictions_max.rds",
+    predictions_max_pc = "target_gene_predictions_max_pc.rds",
     performance = "performance.tsv",
-    PR_plot = "precision_recall_plot.pdf",
+    performance_plot = "performance_plots.pdf",
     args = "arguments_for_predict_target_genes.R",
     XGBoost = "XGBoost_feature_importance.tsv",
     XGBoost_plot = "XGBoost_feature_importance_plot.pdf"
   ) ; if (is.null(out_dir)) {
     out <- "out/" %>%
-      paste0(trait, "/", enriched_dir, "/") %>%
+      paste0(trait, "/", celltypes_dir, "/") %>%
       { if(do_timestamp) paste0(., format(Sys.time(), "%Y%m%d_%H%M%S"), "/") else . } %>%
       { if(!is.null(sub_dir)) paste0(., sub_dir, "/") else . } %>%
       { purrr::map(out, function(x) paste0(., x)) }
@@ -141,20 +139,24 @@ predict_target_genes <- function(trait = NULL,
 
   # 1) CELL TYPE ENRICHMENT ======================================================================================================
   cat("1) Performing cell type enrichment...\n")
-  enriched <- get_enriched(variants,
-                           DHSs,
-                           H3K27ac_specificity_ranked,
-                           H3K27ac,
-                           expression,
-                           expressed,
-                           HiChIP,
-                           TADs,
-                           metadata,
-                           out,
-                           # options to manually choose annotation group (passed by user):
-                           celltype_of_interest,
-                           tissue_of_interest,
-                           celltypes)
+  enriched <- get_tissue_enrichment(variants,
+                                      DHSs,
+                                      H3K27ac_specificity_ranked,
+                                      metadata,
+                                      ratio_cutoff = 1,
+                                      p_value_cutoff = 0.05)
+  
+  # get annotations 
+  annotations <- get_annotations(celltypes,
+                                 celltype_of_interest,
+                                 tissue_of_interest,
+                                 metadata,
+                                 enriched,
+                                 H3K27ac,
+                                 expression,
+                                 expressed,
+                                 HiChIP,
+                                 TADs)
 
   # 2) VARIANTS ======================================================================================================
   # get variant-to-gene universe
@@ -164,22 +166,28 @@ predict_target_genes <- function(trait = NULL,
   vxt_master <- get_vxt_master(variants,
                                TSSs,
                                max_variant_to_gene_distance)
+  vxt_master_basic <- vxt_master %>% dplyr::select(cs, variant, symbol, ensg, enst, protein_coding)
 
   # 3) ANNOTATING ======================================================================================================
   cat("3) Annotating variant-transcript pairs at every level...\n")
 
+  cat("  > G\tAnnotating genes...\n")
+  g <- get_g_level_annotations(
+    vxt_master,
+    annotations)
+  
   cat("  > VxT\tAnnotating variant x transcript pairs...\n")
   vxt <- get_vxt_level_annotations(
     variants,
     DHSs,
     vxt_master,
-    enriched)
+    annotations)
 
   cat("  > VxG\tAnnotating variant x gene pairs...\n")
   vxg <- get_vxg_level_annotations(
     variants,
     vxt_master,
-    enriched)
+    annotations)
  
   # 4) ALL ANNOTATIONS ======================================================================================================
   # Master list of variant-x-transcript annotations
@@ -193,55 +201,54 @@ predict_target_genes <- function(trait = NULL,
   cat("5) Scoring variant-gene pairs...\n")
 
   # get weights
-  # weights_file <- list.files("inst/example_data/", pattern = "weights.tsv", full.names = T)
   weights <- get_weights(weights_file, master)
   
   # split annotations into tissues
-  tissue_annotations <- enriched$celltypes$tissue %>% unique %>%
+  tissue_annotations <- annotations$selected_celltypes$tissue %>% unique %>%
     sapply(function(tissue){
-      master %>% names %>%
+      # gather tissue annotations
+      annots <- master %>% names %>%
         sapply(function(annotation){
           cols <- colnames(master[[annotation]])
           master[[annotation]][,cols[greplany(c(tissue, "value"), cols)], drop = F] %>% rowMeans
         }, USE.NAMES = T, simplify = T)
+      # weight and score
+      score <- annots %>% {rowMeans(. * weights[,1][match(colnames(.), rownames(weights))][col(.)])}
+      cbind(vxt_master_basic, score, annots)
     }, USE.NAMES = T, simplify = F)
   
-  # weight and score tissue-level pairs
-  tissue_scores <- tissue_annotations %>% names %>%
-      sapply(function(tissue){
-        tissue_annotations[[tissue]] %>%
-        {rowMeans(. * weights[[w]][,1][match(colnames(.), rownames(weights[[w]]))][col(.)])}
-      }, USE.NAMES = T, simplify = T)
-  colnames(tissue_scores) <- paste0(colnames(tissue_scores), "_score")
-  
   # calculate pair scores
-  scores <- cbind(
-    vxt_master %>% dplyr::select(cs, variant, symbol, ensg, enst, protein_coding),
-    score = rowMeans(tissue_scores),
-    tissue_scores,
-    vxt_exon_or_inv_distance_score = master$vxt_exon_or_inv_distance[,"value"]
-  ) %>%
-    dplyr::as_tibble() %>%
-    dplyr::arrange(-score) %>%
-    # max score per vxg
-    dplyr::group_by(cs, variant, symbol, ensg) %>%
-    dplyr::mutate(dplyr::across(where(is.numeric), 
-                                ~ max(.x), 
-                                .names = "{.col}_vxg")) %>%
-    # max score per CS
-    dplyr::group_by(cs) %>%
-    dplyr::mutate(dplyr::across(dplyr::ends_with("_vxg"), 
-                                ~ as.numeric(.x == max(.x) & .x > 0), 
-                                .names = "{.col}_max")) %>%
-    # max protein-coding score per CS
-    dplyr::group_by(cs, protein_coding) %>%
-    dplyr::mutate(dplyr::across(dplyr::ends_with("_vxg"),
-                                ~ as.numeric(.x == max(.x) & protein_coding),
-                                .names = "{.col}_max_pc")) %>%
-    dplyr::ungroup()
+  scores <- tissue_annotations %>%
+    purrr::map(
+      .f = function(x){
+        vxt <- x %>%
+          dplyr::as_tibble() %>%
+          dplyr::select(dplyr::all_of(colnames(vxt_master_basic)), score, vxt_exon_or_inv_distance) %>%
+          dplyr::arrange(-score) 
+        # max score per vxg
+        vxg <- vxt %>%
+        dplyr::group_by(cs, variant, symbol, ensg, protein_coding) %>%
+        dplyr::summarise(dplyr::across(where(is.numeric), max))
+        # max score per CS
+        vxg_max <- vxg %>%
+          dplyr::group_by(cs) %>%
+          dplyr::mutate(dplyr::across(where(is.numeric), 
+                                      ~ as.numeric(.x == max(.x) & .x > 0)))
+        # max pc score per CS
+        vxg_max_pc <- vxg %>%
+          dplyr::group_by(cs, protein_coding) %>%
+          dplyr::mutate(dplyr::across(where(is.numeric), 
+                                      ~ as.numeric(.x == max(.x) & .x > 0 & protein_coding)))
+        return(list(vxt = vxt, 
+                    vxg = vxg, 
+                    vxg_max = vxg_max, 
+                    vxg_max_pc = vxg_max_pc))
+      }
+    )   
   
-  saveRDS(tissue_annotations, out$annotations.rds)
-  write_tibble(scores, filename = paste0(out$base, "scores.tsv"))
+  # save
+  saveRDS(tissue_annotations, paste0(out$base, "annotations.rds"))
+  saveRDS(scores, paste0(out$base, "scores.rds"))
 
   # 6) PERFORMANCE ======================================================================================================
   if(do_performance){
@@ -253,11 +260,16 @@ predict_target_genes <- function(trait = NULL,
     check_known_genes(known_genes_file)
 
   # Generate PR curves (model performance metric) (only testing protein-coding genes)
-  performance <- scores %>%
-    dplyr::select(cs:enst, dplyr::ends_with("score")) %>%
-    # get performance
-    get_PR(vxt_master, known_genes, pcENSGs, max_n_known_genes_per_CS)
-
+  performance <- tissue_annotations %>%
+    purrr::map(~ 
+      # get performance
+      get_PR(., vxt_master, known_genes, pcENSGs, max_n_known_genes_per_CS)
+    )
+  # performance %>% names %>%
+  #   sapply(function(tissue){
+  #     
+  #   })
+  
   # # plot extras
   # weight_facets <- dplyr::tibble(prediction_method = unique(performance$summary$prediction_method)) %>%
   #   dplyr::full_join(weights %>% dplyr::as_tibble(rownames = "prediction_method"),
@@ -269,76 +281,86 @@ predict_target_genes <- function(trait = NULL,
   #       levels = c("score",
   #                  weights[,"weight"] %>% unique %>% sort(T) %>% as.character)))
 
-  title_plot <- list(ggplot2::labs(
-    title = paste0(
-      "\nTrait = ", trait,
-      "\nmax n known genes per CS = ", max_n_known_genes_per_CS,
-      "; max distance = ", max_variant_to_gene_distance,
-      "\nEnrichment = ", enriched_dir
-    ),
-    subtitle = paste0(
-      "Tissue(s) = ", enriched$celltypes$tissue %>% unique %>% paste(collapse = ", "),
-      "\n",
-      paste(strwrap(
-        paste0(
-          "Celltype(s) = ", if(celltypes == "all_celltypes"){"all celltypes"}
-          else{enriched$celltypes$celltype %>% unique %>% paste(collapse = ", ")}
-        ),
-        width = 70
-      ), collapse = "\n")
-    )
-  ))
+  # title_plot <- list(ggplot2::labs(
+  #   title = paste0(
+  #     "\nTrait = ", trait,
+  #     "\nmax n known genes per CS = ", max_n_known_genes_per_CS,
+  #     "; max distance = ", max_variant_to_gene_distance,
+  #     "\nCell types = ", celltypes_dir
+  #   ),
+  #   subtitle = paste0(
+  #     "Tissue(s) = ", annotations$selected_celltypes$tissue %>% unique %>% paste(collapse = ", "),
+  #     "\n",
+  #     paste(strwrap(
+  #       paste0(
+  #         "Cell type(s) = ", if(celltypes == "all_celltypes"){"all cell types"}
+  #         else{annotations$selected_celltypes$celltype %>% unique %>% paste(collapse = ", ")}
+  #       ),
+  #       width = 70
+  #     ), collapse = "\n")
+  #   )
+  # ))
 
-  {pdf(out$PR_plot, height = 10, width = 15, onefile = T)
+  {pdf(out$performance_plot, height = 10, width = 15, onefile = T)
 
     # PR score + max
-    print(performance %>%
-            plot_PR(colour = prediction_method) +
-            title_plot)
+    performance %>%
+      purrr::map(~ .x %>% print(plot_PR(., colour = prediction_method) + title_plot))
+    
 
     # PR score + max facets
     print(
       performance %>%
-        purrr::map(
-          ~ .x %>%
-            dplyr::mutate(
-              prediction_method = factor(
-                prediction_method,
-                levels = dplyr::arrange(performance$summary, desc(score_PR_AUC))$prediction_method))) %>%
-        plot_PR() +
-        ggplot2::facet_wrap(. ~ prediction_method) +
-        ggplot2::geom_text(data = performance$summary %>%
-                             dplyr::transmute(prediction_method,
-                                              label = round(score_PR_AUC, 3)),
-                           mapping = ggplot2::aes(x = -Inf, y = Inf, label = label),
-                           hjust = 0, vjust = 1, size = 5) +
-        ggplot2::theme_bw() +
-        ggplot2::theme(axis.ticks = ggplot2::element_blank(),
-                       axis.text = ggplot2::element_blank())
+        purrr::map(.f = function(tissue){
+          t.summary <- tissue$summary
+          tissue %>%
+            purrr::map(~ .x %>%
+                         dplyr::mutate(
+                           prediction_method = factor(
+                             prediction_method,
+                             levels = dplyr::arrange(t.summary, desc(score_PR_AUC))$prediction_method))) %>%
+                     plot_PR() +
+                     ggplot2::facet_wrap(. ~ prediction_method) +
+                     ggplot2::geom_text(data = t.summary %>%
+                                          dplyr::transmute(prediction_method,
+                                                           label = round(score_PR_AUC, 3)),
+                                        mapping = ggplot2::aes(x = -Inf, y = Inf, label = label),
+                                        hjust = 0, vjust = 1, size = 5) +
+                     ggplot2::theme_bw() +
+                     ggplot2::theme(axis.ticks = ggplot2::element_blank(),
+                                    axis.text = ggplot2::element_blank())
+        })
     )
+      
+    
 
     # PR max
     print(
       performance %>%
-        purrr::map(dplyr::filter, prediction_type == "max") %>%
-        plot_PR(colour = prediction_method) +
-        ggrepel::geom_text_repel(min.segment.length = 0, max.overlaps = Inf) +
-        title_plot
+        purrr::map(.f = function(tissue){
+          tissue %>% purrr::map(dplyr::filter, prediction_type == "max") %>%
+            plot_PR(colour = prediction_method) +
+            ggrepel::geom_text_repel(min.segment.length = 0, max.overlaps = Inf) +
+            title_plot
+        })
     )
 
     # F score max
     print(
-      performance$summary %>%
-        dplyr::mutate(F_score = F_score %>% tidyr::replace_na(0)) %>%
-        dplyr::distinct() %>%
-        ggplot2::ggplot(ggplot2::aes(x = reorder(prediction_method, F_score),
-                                     y = F_score)) +
-        ggplot2::geom_col() +
-        ggplot2::labs(x = "Predictor",
-                      y = "F score") +
-        ggsci::scale_fill_igv() +
-        ggplot2::coord_flip() +
-        title_plot
+      performance%>%
+        purrr::map(.f = function(tissue){ 
+          tissue$summary%>%
+            dplyr::mutate(F_score = F_score %>% tidyr::replace_na(0)) %>%
+            dplyr::distinct() %>%
+            ggplot2::ggplot(ggplot2::aes(x = reorder(prediction_method, F_score),
+                                         y = F_score)) +
+            ggplot2::geom_col() +
+            ggplot2::labs(x = "Predictor",
+                          y = "F score") +
+            ggsci::scale_fill_igv() +
+            ggplot2::coord_flip() +
+            title_plot
+        })
     )
 
     # performance metrics

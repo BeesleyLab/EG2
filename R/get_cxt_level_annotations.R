@@ -1,11 +1,11 @@
-get_cxt_level_annotations <- function(enriched,
+get_cxt_level_annotations <- function(annotations,
                                       vxt,
                                       variants) {
 
-  multiHiChIP_indep <- enriched$HiChIP %>% names %>%
+  multiHiChIP_indep <- annotations$HiChIP %>% names %>%
     sapply(function(ct){
       # Intersect with the HiChIP data
-      enriched$HiChIP[[ct]] %>%
+      annotations$HiChIP[[ct]] %>%
         intersect_BEDPE(
           # ! For mutually exclusive intersection with ranges, make variant intervals 1bp long, equal to the end position
           SNPend = variants %>% dplyr::mutate(start = end),

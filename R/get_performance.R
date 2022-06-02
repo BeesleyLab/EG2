@@ -1,4 +1,4 @@
-get_PR <- function(annotations, vxt_master, known_genes, pcENSGs, max_n_known_genes_per_CS){
+get_performance <- function(annotations, vxt_master, known_genes, pcENSGs, max_n_known_genes_per_CS){
 
   performance <- list()
 

@@ -1,6 +1,6 @@
 get_vxg_level_annotations <- function(variants,
                                       vxt_master,
-                                      enriched){
+                                      annotations){
 
   vxg <- list()
 
