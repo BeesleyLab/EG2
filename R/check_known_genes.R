@@ -4,7 +4,6 @@
 #' @param known_genes_file name of the known_genes file
 #'
 #' @return A file of variant-gene pair predictions, with associated scores, saved in the given output directory.
-#' @export
 check_known_genes <- function(known_genes, known_genes_file){
   known_genes_NotFound <- known_genes[known_genes %ni% TSSs$symbol]
   known_genes_NonCoding <- dplyr::filter(TSSs,

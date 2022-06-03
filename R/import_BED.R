@@ -6,7 +6,6 @@
 #' @param metadata_cols A character vector of the names of metadata columns (bedfile cols 4+) in the BED file, to be imported as metadata in the tibble BED. These must be in the same order as they appear in the file, starting from column 4.
 #'
 #' @return A tibble representation of the BED file, optionally with metadata columns. If no metadata column names are provided, only the chrom, start and stop columns will be returned.
-#' @export
 import_BED <- function(bedfile, metadata_cols = NULL) {
 
   # silence "no visible binding" NOTE for data variables

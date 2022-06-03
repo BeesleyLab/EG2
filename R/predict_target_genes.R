@@ -19,7 +19,7 @@
 #' @param do_timestamp If TRUE, will save output into a subdirectory timestamped with the data/time of the run.
 #' @param HiChIP If you are repeatedly running predict_target_genes, you can load the HiChIP object from the reference_panels_dir into the global environment and pass it to the function to prevent redundant re-loading each call to predict_target_genes.
 #' @param H3K27ac If you are repeatedly running predict_target_genes, you can load the H3K27ac object from the reference_panels_dir into the global environment and pass it to the function to prevent redundant re-loading with each call to predict_target_genes.
-#' @return The `annotations` tibble with one row per variant-x-transcript pair, one column per annotation and the resulting weighted score for each pair.
+#' @return The `scores` list, with scores per tissue per score level. Each element has one row per pair and its EG2 score, plus the benchmark predictor (exon_or_distance) for comparison.
 #' @export
 predict_target_genes <- function(trait = NULL,
                                  out_dir = NULL,
@@ -197,7 +197,7 @@ predict_target_genes <- function(trait = NULL,
   # -> rows match vxt_master
   cat("4) Generating master table of transcript x", trait, "variant pairs, with all annotation levels...\n")
   
-  master <- c(vxt, vxg) %>% purrr::map(~ matricise_by_pair(., vxt_master))
+  master <- c(g, vxt, vxg) %>% purrr::map(~ matricise_by_pair(., vxt_master))
   
   # 5) SCORING ======================================================================================================
   cat("5) Scoring variant-gene pairs...\n")
@@ -214,7 +214,7 @@ predict_target_genes <- function(trait = NULL,
           cols <- colnames(master[[annotation]])
           master[[annotation]][,cols[greplany(c(tissue, "value"), cols)], drop = F] %>% rowMeans
         }, USE.NAMES = T, simplify = T)
-      # weight and score
+      # weight and score # TODO: add back in * g_expressed
       score <- annots %>% {rowMeans(. * weights[,1][match(colnames(.), rownames(weights))][col(.)])}
       cbind(vxt_master_basic, score, annots)
     }, USE.NAMES = T, simplify = F)
@@ -232,19 +232,19 @@ predict_target_genes <- function(trait = NULL,
         dplyr::group_by(cs, variant, symbol, ensg, protein_coding) %>%
         dplyr::summarise(dplyr::across(where(is.numeric), max))
         # max score per CS
-        vxg_max <- vxg %>%
+        c_max <- vxg %>%
           dplyr::group_by(cs) %>%
           dplyr::mutate(dplyr::across(where(is.numeric), 
                                       ~ as.numeric(.x == max(.x) & .x > 0)))
         # max pc score per CS
-        vxg_max_pc <- vxg %>%
+        c_max_pc <- vxg %>%
           dplyr::group_by(cs, protein_coding) %>%
           dplyr::mutate(dplyr::across(where(is.numeric), 
                                       ~ as.numeric(.x == max(.x) & .x > 0 & protein_coding)))
         return(list(vxt = vxt, 
                     vxg = vxg, 
-                    vxg_max = vxg_max, 
-                    vxg_max_pc = vxg_max_pc))
+                    c_max = c_max, 
+                    c_max_pc = c_max_pc))
       }
     )   
   
@@ -427,29 +427,26 @@ predict_target_genes <- function(trait = NULL,
 # c <- get_c_level_annotations(
 #   variants)
 # cat("  > V\tAnnotating variants...\n")
-# levels$v <- get_v_level_annotations(
+# v <- get_v_level_annotations(
 #   variants,
 #   H3K27ac,
 #   enriched,
 #   vxt_master,
 #   DHSs)
 # cat("  > T\tAnnotating transcripts...\n")
-# levels$t <- get_t_level_annotations(
+# t <- get_t_level_annotations(
 #   TSSs,
 #   DHSs,
 #   enriched)
-# cat("  > G\tAnnotating genes...\n")
-# levels$g <- get_g_level_annotations(
-#   vxt_master,
-#   enriched)
+
 # cat("  > CxT\tAnnotating credible set x transcript pairs...\n")
-# levels$cxt <- get_cxt_level_annotations(
+# cxt <- get_cxt_level_annotations(
 #   enriched,
 #   vxt,
 #   variants)
 # 
 # cat("  > CxG\tAnnotating credible set x gene pairs...\n")
-# levels$cxg <- get_cxg_level_annotations(
+# cxg <- get_cxg_level_annotations(
 #   vxt_master)
 
 

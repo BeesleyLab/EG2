@@ -14,7 +14,6 @@
 #' @param suffixMetadataCols If TRUE, suffixes are also added to the end of metadata column names, not just the coordinate columns. Default is FALSE.
 #'
 #' @return A tibble BED of all intervals from bedA that contain intersects with bedB, plus all metadata columns from both
-#' @export
 bed_intersect_left <- function(bedA, bedB, suffix = c("",""), keepBcoords = T, keepBmetadata = T, suffixMetadataCols = F){
 
   # silence "no visible binding" NOTE for data variables

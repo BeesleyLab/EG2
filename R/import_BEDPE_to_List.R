@@ -7,7 +7,6 @@
 #' @param metadata_cols A character vector of the names of metadata columns (bedfile cols 4+) in the BED file
 #'
 #' @return A paired (first + last) list representation of the BEDPE file as two valr-compatible tibble BEDs with an ID column matching pairs, optionally with metadata columns
-#' @export
 import_BEDPE_to_List <- function(bedpefile, metadata_cols = NULL, prefix_InteractionID = NULL) {
 
   # silence "no visible binding" NOTE for data variables

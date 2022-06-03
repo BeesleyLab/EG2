@@ -7,7 +7,6 @@
 #' @param TSSend A tibble BED of gene TSSs
 #'
 #' @return A tibble BED of all interaction loops in which one end intersects with a SNP and the other end intersects with a TSS. The coordinates for the SNP
-#' @export
 intersect_BEDPE <- function(bedpe, SNPend, TSSend) {
 
   # silence "no visible binding" NOTE for data variables

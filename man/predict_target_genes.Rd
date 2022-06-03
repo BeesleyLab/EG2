@@ -11,7 +11,7 @@ predict_target_genes(
   variants_file = NULL,
   known_genes_file = NULL,
   reference_panels_dir = NULL,
-  weights_file = "data/weights.tsv",
+  weights_file = NULL,
   celltype_of_interest = NULL,
   tissue_of_interest = NULL,
   celltypes = "enriched_tissues",
@@ -37,7 +37,7 @@ predict_target_genes(
 
 \item{reference_panels_dir}{The directory containing the external, accompanying reference panels data.}
 
-\item{weights_file}{A file of weights for annotations. Must contain `annotation` and `weight` columns. Default is data/weights.tsv. If an annotation is missing from the weights_file, it will be weighted 0.}
+\item{weights_file}{A file of alternative weights for annotations. Must contain `annotation` and `weight` columns. Default is data/weights.tsv. If an annotation is missing from the weights_file, it will be weighted 0.}
 
 \item{celltype_of_interest}{Optional. The celltype(s) of interest for the trait. Only annotations in these celltypes will be used to make predictions. Argument(s) must match the names of celltypes in the metadata. Make sure the celltype of interest has coverage across all annotations (TADs, HiChIP, expression, H3K27ac) in the metadata table.}
 
@@ -60,7 +60,7 @@ predict_target_genes(
 \item{H3K27ac}{If you are repeatedly running predict_target_genes, you can load the H3K27ac object from the reference_panels_dir into the global environment and pass it to the function to prevent redundant re-loading with each call to predict_target_genes.}
 }
 \value{
-The `annotations` tibble with one row per variant-x-transcript pair, one column per annotation and the resulting weighted score for each pair.
+The `scores` list, with scores per tissue per score level. Each element has one row per pair and its EG2 score, plus the benchmark predictor (exon_or_distance) for comparison.
 }
 \description{
 The master, user-facing function of this package.

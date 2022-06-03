@@ -10,7 +10,7 @@ get_tissue_enrichment <- function(variants,
   cat("Performing enrichment analysis to find enriched celltype(s).\n")
   # Fisher enrichment test
   # Intersect SNPs with DHS sites and compute the mean H3K27ac specificity rank of the intersected DHS.
-  # Assuming SNPs overlap sites randomly, compute significance of mean rank of sites where SNPs overlap based on deivation from uniform distribution.
+  # Assuming SNPs overlap sites randomly, compute significance of mean rank of sites where SNPs overlap based on deviation from uniform distribution.
   
   # intersect DHSs
   intersected_DHSs <- bed_intersect_left(variants, DHSs, keepBcoords = F) %>%
@@ -27,6 +27,7 @@ get_tissue_enrichment <- function(variants,
       # uniform distribution parameters
       N = dplyr::n_distinct(DHSs$DHS),
       n = dplyr::n_distinct(intersected_DHSs$DHS),
+      obs_mean_rank,
       unif_mean_rank = (N + 1)/2,
       unif_variance = sqrt((N^2 - 1)/(12 * n)),
       # deviation from uniform distribution = enrichment
@@ -35,9 +36,6 @@ get_tissue_enrichment <- function(variants,
       p_value_adjust = p_value %>% p.adjust,
       pass = ((p_value < p_value_cutoff) & (ratio > ratio_cutoff))) %>%
     dplyr::arrange(p_value)
-  
-  write_tibble(enrichment, out$tissue_enrichments)
-  cat("Enrichment analysis saved to", out$tissue_enrichments, ".\n")
   
   enriched <- enrichment %>%
     # Filter to celltypes that pass filters
@@ -52,6 +50,9 @@ get_tissue_enrichment <- function(variants,
   } else {
     message("No enriched cell types found!\n")
   }
+  
+  write_tibble(enrichment, out$tissue_enrichments)
+  cat("Enrichment analysis saved to", out$tissue_enrichments, ".\n")
   
   return(enriched)
 }

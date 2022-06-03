@@ -7,7 +7,6 @@
 #' @param ... query columns to be retained in the output
 #'
 #' @return A tibble of intersected columns, with .query and .annotation suffixes
-#' @export
 intersect_H3K27ac <- function(l,
                               query,
                               DHSs,
